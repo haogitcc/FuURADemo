@@ -38,6 +38,7 @@ using System.Text.RegularExpressions;
 using log4net;
 using ThingMagic.URA2.Models;
 using ThingMagic.URA2.UI;
+using static ThingMagic.Reader;
 //using Excel = Microsoft.Office.Interop.Excel;
 #endregion Using
 
@@ -188,6 +189,8 @@ namespace ThingMagic.URA2
 
         // Tag database object
         TagDatabase tagdb = new TagDatabase();
+
+        Dictionary<int, GpioPin> gpiIndex = new Dictionary<int, GpioPin>();
 
         public ObservableCollection<string> Positions { get; set; }
 
@@ -1552,6 +1555,7 @@ namespace ThingMagic.URA2
         /// <param name="args"></param>
         private void dispatchtimer_Tick(Object sender, EventArgs args)
         {
+            //Console.WriteLine("##### dispatchtimer_Tick");
             try
             {
                 // Causes a control bound to the BindingSource to reread all the items 
@@ -15716,5 +15720,167 @@ namespace ThingMagic.URA2
         {
             HoptableCheck = true;
         }
+
+        private Thread asyncReadThread = null;
+        protected bool _exitNow = false;
+        private ManualResetEvent waitUntilReadMethodCalled = new ManualResetEvent(false);
+        int gpi_timeout = 250;
+        private void StartReading_gpi_button_Click(object sender, RoutedEventArgs e)
+        {
+            if (startReading_gpi_button.Content.Equals("start"))
+            {
+                if (null != asyncReadThread)
+                {
+                    asyncReadThread.Abort();
+                    asyncReadThread = null;
+                }
+
+                gpi_timeout = int.Parse(gpi_timeout_text.Text);
+
+                //// Start timer to render data on the grid and calculate read rate
+                dispatchtimer.Start();
+                readRatePerSec.Start();
+
+                _exitNow = false;
+                startReading_gpi_button.Content = "stop";
+                if (null == asyncReadThread)
+                {
+                    asyncReadThread = new Thread(StartContinuousRead);
+                    asyncReadThread.IsBackground = true;
+                    asyncReadThread.Start();
+                }
+            }
+            else if (startReading_gpi_button.Content.Equals("stop"))
+            {
+                _exitNow = true;
+                startReading_gpi_button.Content = "start";
+                
+                while(asyncReadThread.ThreadState == ThreadState.Background)
+                {
+                    Console.WriteLine("################ " + asyncReadThread.ThreadState);
+                }
+
+                //// Stop timer to render data on the grid
+                dispatchtimer.Stop();
+                readRatePerSec.Stop();
+                Dispatcher.BeginInvoke(new ThreadStart(delegate ()
+                {
+                    gpi30_status.Source = new BitmapImage(new Uri(@"\Icons\LedBlack.png", UriKind.RelativeOrAbsolute));
+                    gpi31_status.Source = new BitmapImage(new Uri(@"\Icons\LedBlack.png", UriKind.RelativeOrAbsolute));
+                }));
+
+            }
+        }
+
+        private void StartContinuousRead()
+        {
+            Console.WriteLine("1@#### StartContinuousRead");
+            try
+            {
+                while (!_exitNow)
+                {
+                    //int readTime = (int)objReader.ParamGet("/reader/read/asyncOnTime");
+                    int readTime = gpi_timeout;
+                    TagReadData[] trds = tRead(readTime);
+                    Dispatcher.BeginInvoke(new ThreadStart(delegate ()
+                    {
+                        lock (tagdb)
+                        {
+                            tagdb.AddRange(trds);
+                        }
+                    }));
+
+                    GpioPin[] gpis = objReader.GpiGet();
+                    gpiIndex.Clear();
+                    foreach (GpioPin gpi in gpis)
+                    {
+                        gpiIndex.Add(gpi.Id, gpi);
+                        Console.WriteLine(gpi.Id + ":" + gpi.Output + ":" + gpi.High);
+                    }
+
+                    Dispatcher.BeginInvoke(new ThreadStart(delegate ()
+                    {
+                        //tagdb.Repaint();
+
+                        totalUniqueTagsReadTextBox.Content = tagdb.UniqueTagCount.ToString();
+
+                        txtTotalTagReads.Content = tagdb.TotalTagCount.ToString();
+                    }));
+
+                    Dispatcher.BeginInvoke(new ThreadStart(delegate ()
+                    {
+                        //gpi30_status.Source = gpiIndex[30].High == true ?
+                        gpi30_status.Source = gpiIndex[5].High == true ?
+                            new BitmapImage(new Uri(@"\Icons\LedRed.png", UriKind.RelativeOrAbsolute)) :
+                            new BitmapImage(new Uri(@"\Icons\LedGreen.png", UriKind.RelativeOrAbsolute));
+                        //gpi31_status.Source = gpiIndex[31].High == true ?
+                        gpi31_status.Source = gpiIndex[6].High == true ?
+                            new BitmapImage(new Uri(@"\Icons\LedRed.png", UriKind.RelativeOrAbsolute)) :
+                            new BitmapImage(new Uri(@"\Icons\LedGreen.png", UriKind.RelativeOrAbsolute));
+                    }));
+
+                    Console.WriteLine("2222 @#### StartContinuousRead ");
+                }
+
+                Console.WriteLine("2222 @#### StartContinuousRead  exit");
+                Dispatcher.BeginInvoke(new ThreadStart(delegate ()
+                {
+                    gpi30_status.Source = new BitmapImage(new Uri(@"\Icons\LedBlack.png", UriKind.RelativeOrAbsolute));
+                    gpi31_status.Source = new BitmapImage(new Uri(@"\Icons\LedBlack.png", UriKind.RelativeOrAbsolute));
+                }));
+            }
+            // Catch all exceptions.  We're in a background thread,
+            // so exceptions will be lost if we don't pass them on.
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.ToString());
+            }
+        }
+
+        /// <summary>
+        /// Read RFID tags for a fixed duration.
+        /// </summary>
+        /// <param name="timeout">the time to spend reading tags, in milliseconds</param>
+        /// <returns>the tags read</returns>
+        public TagReadData[] tRead(int timeout)
+        {
+            Console.WriteLine("1@#### tRead timeout=" + timeout);
+            //CheckRegion();
+            if (timeout < 0)
+                throw new ArgumentOutOfRangeException("Timeout (" + timeout.ToString() + ") must be greater than or equal to 0");
+
+            else if (timeout > 65535)
+                throw new ArgumentOutOfRangeException("Timeout (" + timeout.ToString() + ") must be less than 65536");
+
+            List<TagReadData> tagReads = new List<TagReadData>();
+
+            ReadInternal((UInt16)timeout, (ReadPlan)objReader.ParamGet("/reader/read/plan"), ref tagReads);
+
+            return tagReads.ToArray();
+        }
+
+        // Stop trigger feature enabled or disabled
+        private void ReadInternal(UInt16 timeout, ReadPlan rp, ref List<TagReadData> tagReads)
+        {
+            Console.WriteLine("1@#### ReadInternal ");
+            if ((rp is SimpleReadPlan))
+            {
+                DateTime now = DateTime.Now;
+                DateTime endTime = now.AddMilliseconds(timeout);
+
+                while (now <= endTime)
+                {
+                    TimeSpan totalTagFetchTime = new TimeSpan();
+                    TimeSpan timeElapsed = endTime - now;
+                    timeout = ((ushort)timeElapsed.TotalMilliseconds < 65535) ? (ushort)timeElapsed.TotalMilliseconds : (ushort)65535;
+                    Console.WriteLine("1@#### ReadInternal timeout=" + timeout);
+                    TagReadData[] trds = objReader.Read(timeout);
+                    tagReads.AddRange(trds);
+
+                    now = DateTime.Now - totalTagFetchTime;
+                }
+            }
+        }
+        
     }
 }

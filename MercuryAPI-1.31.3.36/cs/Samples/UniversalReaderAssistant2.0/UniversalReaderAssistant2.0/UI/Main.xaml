@@ -31,8 +31,13 @@
                 <ColumnDefinition Width="Auto" />
                 <ColumnDefinition Width="Auto" />
                 <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="Auto" />
                 <ColumnDefinition Width="*" />
             </Grid.ColumnDefinitions>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="48"/>
+                <RowDefinition Height="48"/>
+            </Grid.RowDefinitions>
             <Grid.Background>
                 <LinearGradientBrush EndPoint="0.5,1" StartPoint="0.5,0">
                     <GradientStop Color="White" Offset="0" />
@@ -44,7 +49,7 @@
                 <Label Margin="0,3,0,3" Content="Reader :" FontWeight="DemiBold" VerticalAlignment="Center"/>
                 <Label Margin="-5,3,3,3" ToolTipService.ShowOnDisabled="True" Content="" Height="28" Name="lblReaderUri" MinWidth="145" MaxWidth="300" Foreground="Black" ToolTip="Reader URI" VerticalAlignment="Center"/>
             </StackPanel>
-
+            
             <StackPanel Grid.Column="1" Orientation="Horizontal">
                 <Image Name="imgReaderStatus" Width="25" Height="25" HorizontalAlignment="Center" VerticalAlignment="Center" Source="/UniversalReaderAssistant;component/Icons/LedRed.png" />
                 <!--<Border Margin="0,3,0,3" VerticalAlignment="Center" x:Name="AnimatedColorButton" Width="25" Height="25" CornerRadius="25" BorderBrush="Gray" BorderThickness="1">
@@ -121,7 +126,14 @@
                 <Image Name="toolbarOpeHelpImage" Source="..\Icons\Help.png" />
             </Button>
 
-            <Image Grid.Column="6" Margin="3,3,20,3" Name="image1" Source="/UniversalReaderAssistant;component/Images/company_logo.png" MouseDown="image1_MouseDown" HorizontalAlignment="Right"/>
+            <StackPanel Grid.Column="6" Orientation="Horizontal">
+                <Button x:Name="startReading_gpi_button" Content="start" Height="30" Width="55" Margin="4" Click="StartReading_gpi_button_Click"/>
+                <Image Name="gpi30_status" Width="20" Height="20" Margin="4"  Source="/UniversalReaderAssistant;component/Icons/LedBlack.png" />
+                <Image Name="gpi31_status" Width="20" Height="20" Margin="4"  Source="/UniversalReaderAssistant;component/Icons/LedBlack.png" />
+                <TextBox x:Name="gpi_timeout_text" Text="250" Margin="4" Height="25" MinWidth="45"/>
+            </StackPanel>
+
+            <Image Grid.Column="7" Margin="3,3,20,3" Name="image1" Source="/UniversalReaderAssistant;component/Images/company_logo.png" MouseDown="image1_MouseDown" HorizontalAlignment="Right"/>
         </Grid>
         <StackPanel Height="4" Grid.Row="0" Orientation="Horizontal" DockPanel.Dock="Top">
             <StackPanel.Background>
@@ -158,6 +170,7 @@
                 </StackPanel>
             </Button>
         </StackPanel>
+        
         <!-- The Grid containing the three child Grids fills the DockPanel: -->
         <Grid Name="parentGrid" Grid.IsSharedSizeScope="True">
             <!-- Layer 0: -->
@@ -166,6 +179,7 @@
                     <ColumnDefinition Width="300*" />
                     <ColumnDefinition Width="150*" SharedSizeGroup="maincolu" />
                 </Grid.ColumnDefinitions>
+                
                 <TabControl Name="tcTagResults" Background="#9CAAC1">
                     <TabItem Name="tiTagResults" GotFocus="tiTagResults_GotFocus" >
                         <TabItem.Header>
@@ -442,7 +456,7 @@
                                                         <Label Grid.Row="1" Grid.Column="0" Margin="3" HorizontalAlignment="Right" Content="Reader Name :"/>
                                                         <ComboBox Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="3" Margin="3" ToolTip="Enter reader IPaddress/Hostname" Name="cmbFixedReaderAddr" ToolTipService.ShowOnDisabled="True" Text="" SelectedIndex="0" IsEditable="True" Visibility="Collapsed"/>
                                                         <ComboBox Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="3" Margin="3" ToolTip="Enter reader com port" Name="cmbReaderAddr" ToolTipService.ShowOnDisabled="True" Text="" SelectedIndex="0" IsEditable="True" Visibility="Visible"/>
-                                                        <TextBox Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="3" Margin="3" ToolTip="Enter readerIP:port (ex.172.16.16.119:5000)" Name="txtCustomTransport" ToolTipService.ShowOnDisabled="True" Text="" Visibility="Hidden"/>
+                                                        <TextBox Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="3" Margin="3" ToolTip="Enter readerIP:port (ex.172.16.16.119:5000)" Name="txtCustomTransport" ToolTipService.ShowOnDisabled="True" Text="192.168.8.166:8086" Visibility="Hidden" />
 
                                                         <!--<Label Grid.Row="2" Grid.Column="0" Margin="3" HorizontalAlignment="Right" Content="Transport Logs :"/>-->
                                                         <CheckBox Grid.Row="2" Grid.Column="1" HorizontalAlignment="Left" VerticalAlignment="Center" Content="Transport Logs" Name="chkEnableTransportLogging" ToolTip="Enable Transport Logging." ToolTipService.ShowOnDisabled="True" Margin="3"/>
