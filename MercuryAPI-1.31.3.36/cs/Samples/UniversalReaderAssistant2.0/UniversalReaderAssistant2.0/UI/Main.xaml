@@ -23,9 +23,8 @@
         </ResourceDictionary>
     </Window.Resources>
     <DockPanel>
-        <Grid DockPanel.Dock="Top" Name="stackPanel13" VerticalAlignment="Top" Height="48">
+        <Grid DockPanel.Dock="Top" Name="stackPanel13" VerticalAlignment="Top">
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="Auto" />
                 <ColumnDefinition Width="Auto" />
                 <ColumnDefinition Width="Auto" />
                 <ColumnDefinition Width="Auto" />
@@ -36,7 +35,8 @@
             </Grid.ColumnDefinitions>
             <Grid.RowDefinitions>
                 <RowDefinition Height="48"/>
-                <RowDefinition Height="48"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
             </Grid.RowDefinitions>
             <Grid.Background>
                 <LinearGradientBrush EndPoint="0.5,1" StartPoint="0.5,0">
@@ -126,14 +126,28 @@
                 <Image Name="toolbarOpeHelpImage" Source="..\Icons\Help.png" />
             </Button>
 
-            <StackPanel Grid.Column="6" Orientation="Horizontal">
-                <Button x:Name="startReading_gpi_button" Content="start" Height="30" Width="55" Margin="4" Click="StartReading_gpi_button_Click"/>
-                <Image Name="gpi30_status" Width="20" Height="20" Margin="4"  Source="/UniversalReaderAssistant;component/Icons/LedBlack.png" />
-                <Image Name="gpi31_status" Width="20" Height="20" Margin="4"  Source="/UniversalReaderAssistant;component/Icons/LedBlack.png" />
-                <TextBox x:Name="gpi_timeout_text" Text="250" Margin="4" Height="25" MinWidth="45"/>
-            </StackPanel>
-
             <Image Grid.Column="7" Margin="3,3,20,3" Name="image1" Source="/UniversalReaderAssistant;component/Images/company_logo.png" MouseDown="image1_MouseDown" HorizontalAlignment="Right"/>
+
+            <StackPanel  Grid.Row="1"  Grid.ColumnSpan="7" Orientation="Horizontal" >
+                <StackPanel x:Name="write_operation_stackpanel" Orientation="Horizontal" Visibility="Collapsed">
+                    <Label Content="EPC :"/>
+                    <TextBox x:Name="batch_start_epc_textbox" MinWidth="150" Height="25" Margin="3" BorderBrush="Black"/>
+                    <Label Content="Start Num :"/>
+                    <TextBox x:Name="batch_start_num_textbox" MinWidth="45" Height="25" Margin="3" BorderBrush="Black"/>
+                    <Button x:Name="batch_refresh_button" Content="Refresh" Margin="3" Height="25" MinWidth="75" Click="Batch_refresh_button_Click"/>
+                    <Button x:Name="batch_write_button" Content="Write" Margin="3" Height="25" MinWidth="75" Click="Batch_write_button_Click" />
+                    <CheckBox x:Name="batch_is_fixed_epc_checkbox" Content="IsFixed"  Height="25" IsChecked="False" Margin="3" VerticalAlignment="Center" />
+                    <Label x:Name="writing_status_label" Content=""/>
+                </StackPanel>
+
+                <StackPanel x:Name="gpi_detect_stackpanel" Orientation="Horizontal" Visibility="Collapsed">
+                    <Button x:Name="startReading_gpi_button" Content="start" Height="30" Width="55" Margin="4" Click="StartReading_gpi_button_Click"/>
+                    <TextBox x:Name="gpi_timeout_text" Text="250" Margin="4" Height="25" MinWidth="45"/>
+                    <Image Name="gpi30_status" Width="20" Height="20" Margin="4"  Source="/UniversalReaderAssistant;component/Icons/LedBlack.png" />
+                    <Image Name="gpi31_status" Width="20" Height="20" Margin="4"  Source="/UniversalReaderAssistant;component/Icons/LedBlack.png" />
+                </StackPanel>
+                
+            </StackPanel>
         </Grid>
         <StackPanel Height="4" Grid.Row="0" Orientation="Horizontal" DockPanel.Dock="Top">
             <StackPanel.Background>

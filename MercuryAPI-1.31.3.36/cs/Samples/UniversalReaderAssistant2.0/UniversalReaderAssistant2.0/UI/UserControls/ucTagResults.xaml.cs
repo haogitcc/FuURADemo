@@ -55,6 +55,15 @@ namespace ThingMagic.URA2
             epcColumn.Binding = new Binding("EPC");
             epcColumn.Header = "EPC";
             epcColumn.Width = new DataGridLength(1, DataGridLengthUnitType.Star);
+
+            newepcColumn.Binding = new Binding("NewEPC");
+            newepcColumn.Header = "New EPC";
+            newepcColumn.Width = new DataGridLength(1, DataGridLengthUnitType.Star);
+
+            writeStatusColumn.Binding = new Binding("WriteStatus");
+            writeStatusColumn.Header = "Write Status";
+            writeStatusColumn.Width = new DataGridLength(1, DataGridLengthUnitType.Star);
+
             timeStampColumn.Binding = new Binding("TimeStamp");
             timeStampColumn.Binding.StringFormat = "{0:hh:mm:ss.fff tt}";
             timeStampColumn.Header = "TimeStamp(msec)";

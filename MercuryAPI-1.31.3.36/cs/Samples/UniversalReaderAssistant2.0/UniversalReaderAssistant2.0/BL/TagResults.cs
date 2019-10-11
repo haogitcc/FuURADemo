@@ -19,6 +19,8 @@ namespace ThingMagic.URA2.BL
         protected string dataInAscii = null;
         protected string epcInReverseBase36 = null;
         //protected string dataInReverseBase36 = null;
+        protected string newEpc = "";
+        protected int writeStatus = 0;
         public TagReadRecord(TagReadData newData)
         {
             lock (new Object())
@@ -138,6 +140,10 @@ namespace ThingMagic.URA2.BL
         {
             get { return RawRead.EpcString; }
         }
+        public string DataRaw
+        {
+            get { return ByteFormat.ToHex(RawRead.Data); }
+        }
         public string Data
         {
             get { return ByteFormat.ToHex(RawRead.Data, "", " "); }
@@ -175,6 +181,24 @@ namespace ThingMagic.URA2.BL
                     }
                 }
                 return (gpi + "\r" + gpo);
+            }
+        }
+
+        public string NewEPC
+        {
+            get { return newEpc; }
+            set
+            {
+                newEpc = value;
+            }
+        }
+
+        public int WriteStatus
+        {
+            get { return writeStatus; }
+            set
+            {
+                writeStatus = value;
             }
         }
 
@@ -293,6 +317,19 @@ namespace ThingMagic.URA2.BL
                         return a.Phase - b.Phase;
                     });
                     break;
+                case "NewEPC":
+                    comparer = new Comparison<TagReadRecord>(delegate (TagReadRecord a, TagReadRecord b)
+                    {
+                        return String.Compare(a.NewEPC, b.NewEPC);
+                    });
+                    break;
+
+                case "WriteStatus":
+                    comparer = new Comparison<TagReadRecord>(delegate (TagReadRecord a, TagReadRecord b)
+                    {
+                        return a.WriteStatus - b.WriteStatus;
+                    });
+                    break;
             }
             return comparer;
         }
@@ -328,7 +365,7 @@ namespace ThingMagic.URA2.BL
         /// <summary>
         /// EPC index into tag list
         /// </summary>
-        Dictionary<string, TagReadRecord> EpcIndex = new Dictionary<string, TagReadRecord>();
+        public Dictionary<string, TagReadRecord> EpcIndex = new Dictionary<string, TagReadRecord>();
 
         static long UniqueTagCounts = 0;
         static long TotalTagCounts = 0;

@@ -29,6 +29,8 @@
                     </DataGridTemplateColumn>
                     <DataGridTextColumn x:Name="serialNoColumn" Header="#" />
                     <DataGridTextColumn x:Name="epcColumn"/>
+                <DataGridTextColumn x:Name="newepcColumn" Visibility="Collapsed"/>
+                <DataGridTextColumn x:Name="writeStatusColumn" Visibility="Collapsed"/>
                 <DataGridTextColumn x:Name="epcColumnInAscii" FontFamily="Consolas" Visibility="Collapsed" />
                 <DataGridTextColumn x:Name="epcColumnInReverseBase36" Visibility="Collapsed" />
                 <DataGridTextColumn x:Name="dataColumn" Visibility="Collapsed" />

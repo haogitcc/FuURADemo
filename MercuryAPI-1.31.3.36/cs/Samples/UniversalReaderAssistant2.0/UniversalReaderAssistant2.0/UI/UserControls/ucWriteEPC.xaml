@@ -70,7 +70,7 @@
             </GroupBox.Header>
             <StackPanel Name="grid4" Margin="5" Orientation="Horizontal">
                 <TextBox Margin="3" CaretBrush="Black" TextWrapping="Wrap" Name="txtWriteEPC" Background="#0A000000" VerticalAlignment="Center" CharacterCasing="Normal" MaxLines="62" FontFamily="Consolas" Width="283" VerticalScrollBarVisibility="Auto" />
-                <Button Content="Write" Width="50" HorizontalAlignment="Left" Margin="3" Name="btnWrite" Click="btnWrite_Click" />
+                <Button Content="Write" Width="50" HorizontalAlignment="Left" Margin="3" Name="btnWrite" Click="btnWrite_Click" RenderTransformOrigin="0.5,0.509" />
             </StackPanel>
         </GroupBox>
     </StackPanel>

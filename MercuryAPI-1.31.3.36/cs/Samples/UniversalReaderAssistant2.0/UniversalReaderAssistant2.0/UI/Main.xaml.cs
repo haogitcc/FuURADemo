@@ -1198,6 +1198,8 @@ namespace ThingMagic.URA2
             selectedColumnList.Add(new ColumnSelectionForTagResult(false, "Phase"));
             selectedColumnList.Add(new ColumnSelectionForTagResult(false, "Protocol"));
             selectedColumnList.Add(new ColumnSelectionForTagResult(false, "GPIO"));
+            selectedColumnList.Add(new ColumnSelectionForTagResult(false, "WriteEpc"));
+            selectedColumnList.Add(new ColumnSelectionForTagResult(false, "GpiDetect"));
             //selectedColumnList.Add(new ColumnSelectionForTagResult(false, "BrandID"));
             cbxcolumnSelection.ItemsSource = selectedColumnList;
         }
@@ -2589,6 +2591,8 @@ namespace ThingMagic.URA2
                         txtfontSize.IsEnabled = true;
                         txtRFOffTimeout.IsEnabled = true;
                         txtRFOnTimeout.IsEnabled = true;
+                        write_operation_stackpanel.IsEnabled = true;
+                        gpi_detect_stackpanel.IsEnabled = true;
                         cbxAntennamux.IsEnabled = chbxFour.IsEnabled = chbxOne.IsEnabled = chbxTwo.IsEnabled = chbxThree.IsEnabled = true;
                         chbxGpo1.IsEnabled = chbxGpo2.IsEnabled = chbxGpo3.IsEnabled = chbxGpo4.IsEnabled = true;
                         cbxAntennamux.IsChecked = chbxFour.IsChecked = chbxOne.IsChecked = chbxTwo.IsChecked = chbxThree.IsChecked = false;
@@ -2626,6 +2630,14 @@ namespace ThingMagic.URA2
                         }
 
                         btnRead.IsEnabled = false;
+
+                        Dispatcher.BeginInvoke(new ThreadStart(delegate ()
+                        {
+                            gpi30_status.Source = new BitmapImage(new Uri(@"\Icons\LedBlack.png", UriKind.RelativeOrAbsolute));
+                            gpi31_status.Source = new BitmapImage(new Uri(@"\Icons\LedBlack.png", UriKind.RelativeOrAbsolute));
+                        }));
+                        gpi_detect_stackpanel.IsEnabled = false;
+                        write_operation_stackpanel.IsEnabled = false;
 
                         cmbReaderAddr.IsEnabled = true;
                         cmbFixedReaderAddr.IsEnabled = true;
@@ -4838,6 +4850,10 @@ namespace ThingMagic.URA2
             txtRFOffTimeout.IsEnabled = option;
             // Rf on time
             txtRFOnTimeout.IsEnabled = option;
+
+            write_operation_stackpanel.IsEnabled = option;
+            gpi_detect_stackpanel.IsEnabled = option;
+
             // Disable all the buttons in settings, when async read is going on
             grpbxPerformanceTuning.IsEnabled = option;
             grpbxRdrPwrSettngs.IsEnabled = option;
@@ -5267,6 +5283,8 @@ namespace ThingMagic.URA2
                         txtfontSize.IsEnabled = false;
                         txtRFOffTimeout.IsEnabled = false;
                         txtRFOnTimeout.IsEnabled = false;
+                        write_operation_stackpanel.IsEnabled = false;
+                        gpi_detect_stackpanel.IsEnabled = false;
                     }
 
                     btnRead.ToolTip = "Stop Async Read";
@@ -5493,6 +5511,8 @@ namespace ThingMagic.URA2
                 txtfontSize.IsEnabled = true;
                 txtRFOffTimeout.IsEnabled = true;
                 txtRFOnTimeout.IsEnabled = true;
+                write_operation_stackpanel.IsEnabled = true;
+                gpi_detect_stackpanel.IsEnabled = true;
 
                 // Calculate read rate with time elapsed which is calculated before
                 // calling StopReading() api method. So that we don't miss the 
@@ -6327,23 +6347,47 @@ namespace ThingMagic.URA2
                             TagResults.GPIOColumn.Visibility = Visibility.Collapsed;
                         }
                         break;
-                    //case "BrandID":
-                    //    if (rda.IsColumnChecked && btnRead.Content.ToString() == "Read")
-                    //    {
-                    //        //As there is defualt select for Brand ID 
-                    //        //So all the filters will be disabled and defualt filter will be applied 
-                    //        chkApplyFilter1.IsChecked = false;
-                    //        TagResults.BrandIDColumn.Visibility = System.Windows.Visibility.Visible;
-                    //    }
-                    //    else
-                    //    {
-                    //        TagResults.BrandIDColumn.Visibility = System.Windows.Visibility.Collapsed;
-                    //        if (btnRead.Content.ToString() != "Read")
-                    //        {
-                    //            rda.IsColumnChecked = false;
-                    //        }
-                    //    }
-                    //    break;
+                    case "WriteEpc":
+                        if (rda.IsColumnChecked)
+                        {
+                            TagResults.newepcColumn.Visibility = System.Windows.Visibility.Visible;
+                            TagResults.writeStatusColumn.Visibility = System.Windows.Visibility.Visible;
+                            write_operation_stackpanel.Visibility = System.Windows.Visibility.Visible;
+                        }
+                        else
+                        {
+                            TagResults.newepcColumn.Visibility = Visibility.Collapsed;
+                            TagResults.writeStatusColumn.Visibility = Visibility.Collapsed;
+                            write_operation_stackpanel.Visibility = System.Windows.Visibility.Collapsed;
+                        }
+                        break;
+                    case "GpiDetect":
+                        if (rda.IsColumnChecked)
+                        {
+                            gpi_detect_stackpanel.Visibility = System.Windows.Visibility.Visible;
+                        }
+                        else
+                        {
+                            gpi_detect_stackpanel.Visibility = System.Windows.Visibility.Collapsed;
+                        }
+                        break;
+                        //case "BrandID":
+                        //    if (rda.IsColumnChecked && btnRead.Content.ToString() == "Read")
+                        //    {
+                        //        //As there is defualt select for Brand ID 
+                        //        //So all the filters will be disabled and defualt filter will be applied 
+                        //        chkApplyFilter1.IsChecked = false;
+                        //        TagResults.BrandIDColumn.Visibility = System.Windows.Visibility.Visible;
+                        //    }
+                        //    else
+                        //    {
+                        //        TagResults.BrandIDColumn.Visibility = System.Windows.Visibility.Collapsed;
+                        //        if (btnRead.Content.ToString() != "Read")
+                        //        {
+                        //            rda.IsColumnChecked = false;
+                        //        }
+                        //    }
+                        //    break;
                 }
             }
             TagResults.dgTagResults.InvalidateVisual();
@@ -15729,6 +15773,10 @@ namespace ThingMagic.URA2
         {
             if (startReading_gpi_button.Content.Equals("start"))
             {
+                startReading_gpi_button.Content = "stop";
+                write_operation_stackpanel.IsEnabled = false;
+                btnRead.IsEnabled = false;
+
                 if (null != asyncReadThread)
                 {
                     asyncReadThread.Abort();
@@ -15742,7 +15790,7 @@ namespace ThingMagic.URA2
                 readRatePerSec.Start();
 
                 _exitNow = false;
-                startReading_gpi_button.Content = "stop";
+                
                 if (null == asyncReadThread)
                 {
                     asyncReadThread = new Thread(StartContinuousRead);
@@ -15754,8 +15802,10 @@ namespace ThingMagic.URA2
             {
                 _exitNow = true;
                 startReading_gpi_button.Content = "start";
-                
-                while(asyncReadThread.ThreadState == ThreadState.Background)
+                write_operation_stackpanel.IsEnabled = true;
+                btnRead.IsEnabled = true;
+
+                while (asyncReadThread.ThreadState == ThreadState.Background)
                 {
                     Console.WriteLine("################ " + asyncReadThread.ThreadState);
                 }
@@ -15881,6 +15931,260 @@ namespace ThingMagic.URA2
                 }
             }
         }
-        
+
+        private void Batch_refresh_button_Click(object sender, RoutedEventArgs e)
+        {
+            string validEPC = batch_start_epc_textbox.Text;
+            //if (validEPC.Trim().Equals(""))
+            //{
+            //    MessageBoxResult result = MessageBox.Show("Attempting to write an empty EPC.Do you want proceed ?",
+            //       "Universal Reader Assistant", MessageBoxButton.OKCancel, MessageBoxImage.Warning);
+            //    return;
+            //}
+
+            if (batch_is_fixed_epc_checkbox.IsChecked == true)
+            {
+                if (batch_start_epc_textbox.Text.Trim() == "")
+                {
+                    batch_start_epc_textbox.Text = "0000";
+                }
+
+                if (((validEPC.Trim().Length % 4) != 0) || validEPC.Trim().Contains(" "))
+                {
+                    MessageBox.Show("Please enter a valid New EPC", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                    return;
+                }
+
+                Dispatcher.Invoke(new del(delegate ()
+                {
+                    foreach (TagReadRecord mf in tagdb.EpcIndex.Values)
+                    {
+                        mf.NewEPC = batch_start_epc_textbox.Text;
+                    }
+                }));
+                
+            }
+            else
+            {
+                Dispatcher.Invoke(new del(delegate ()
+                {
+                    List<string> epclist = createEpcList(tagdb.EpcIndex.Count, batch_start_epc_textbox.Text);
+                    int i = 0;
+                    foreach (TagReadRecord mf in tagdb.EpcIndex.Values)
+                    {
+                        mf.NewEPC = epclist[i++];
+                    }
+                }));
+                
+            }
+
+            tagdb.Repaint();
+        }
+
+        private List<string> createEpcList(int count, string prefix)
+        {
+            if (prefix.Trim() == "")
+            {
+                batch_start_epc_textbox.Text = "0000";
+            }
+
+            if (((prefix.Trim().Length % 4) != 0) || prefix.Trim().Contains(" "))
+            {
+                MessageBox.Show("Please enter a valid New EPC", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                return null;
+            }
+
+            int len = count;
+            List<string> epclist = new List<string>();
+            if (batch_start_num_textbox.Text.Trim().Equals(""))
+            {
+                batch_start_num_textbox.Text = "0";
+            }
+
+            int start = int.Parse(batch_start_num_textbox.Text.Trim());
+
+            for (int i = 0; i < len; i++)
+            {
+                Console.WriteLine("##### start=" + start);
+                epclist.Add(prefix + intToHex(start++));
+            }
+
+            return epclist;
+        }
+
+        string intToHex(int n)
+        {
+            if (n == 0)
+                return "0000";
+            StringBuilder s = new StringBuilder();
+            string a;
+            char[] b = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F' };
+            while (n != 0)
+            {
+                s = s.Append(b[n % 16]);
+                //Console.WriteLine("**** s=" + s);
+                n = n / 16;
+            }
+            a = Reverse(s.ToString());
+
+            //Console.WriteLine("1@a=" + a);
+            int len = a.Length;
+            if (len % 4 != 0)
+            {
+                for (int i = 0; i < (4 - len); i++)
+                {
+                    a = "0" + a;
+                }
+            }
+            //Console.WriteLine("2@a=" + a);
+            return a;
+        }
+
+        /// <summary>
+        /// 实现字符串反转
+        /// </summary>
+        /// <param name="str"></param>
+        /// <returns></returns>
+        public static string Reverse(string str)
+        {
+            if (String.IsNullOrEmpty(str))
+                throw new ArgumentException("字符串为空！");
+            StringBuilder sb = new StringBuilder(str.Length);
+            for (int i = str.Length - 1; i >= 0; i--)
+            {
+                sb.Append(str[i]);
+            }
+            return sb.ToString();
+        }
+
+        private void Batch_write_button_Click(object sender, RoutedEventArgs e)
+        {
+            int successCount = 0;
+            int failedCount = 0;
+
+            uint startAddress = 0;
+            int dataLength = 0;
+            int antenna = 0;
+            Gen2.Bank selectMemBank = Gen2.Bank.EPC;
+
+            if (batch_write_button.Content.Equals("Write"))
+            {
+                batch_write_button.Content = "StopWriting";
+                gpi_detect_stackpanel.IsEnabled = false;
+                btnRead.IsEnabled = false;
+
+                antenna = ((null != GetSelectedAntennaList()) ? (GetSelectedAntennaList()[0]) : antenna);
+
+                Console.WriteLine("antenna=" + antenna);
+
+                objReader.ParamSet("/reader/tagop/antenna", antenna);
+
+                foreach (TagReadRecord mf in tagdb.EpcIndex.Values)
+                {
+                    writing_status_label.Content = "writing " + mf.EPC;
+                    if (mf.NewEPC.Trim() != "" && mf.Checked == true)
+                    {
+                        Dispatcher.Invoke(new del(delegate ()
+                        {
+                            try
+                            {
+                                TagFilter searchSelect = null;
+
+                                if (mf.DataRaw.Length == 0)
+                                {
+                                    searchSelect = new TagData(mf.EPC);
+                                    selectMemBank = Gen2.Bank.EPC;
+                                }
+                                else
+                                {
+                                    if (chkEmbeddedReadData.IsChecked == true && cbxReadDataBank.Text == "TID")
+                                    {
+                                        startAddress = uint.Parse(txtembReadStartAddr.Text);
+                                        byte[] SearchSelectData = ByteFormat.FromHex(mf.DataRaw);
+                                        if (null == SearchSelectData)
+                                        {
+                                            dataLength = 0;
+                                        }
+                                        else
+                                        {
+                                            dataLength = SearchSelectData.Length;
+                                        }
+
+                                        searchSelect = new Gen2.Select(false, selectMemBank, startAddress, Convert.ToUInt16(dataLength * 8), SearchSelectData);
+                                        selectMemBank = Gen2.Bank.TID;
+                                    }
+                                }
+                                WriteEPC(searchSelect, mf.NewEPC);
+                                mf.WriteStatus = 1;
+                                successCount++;
+                            }
+                            catch (Exception ex)
+                            {
+                                //MessageBox.Show(ex.Message, "Error [" + mf.EPC + "]", MessageBoxButton.OK, MessageBoxImage.Error);
+                                mf.WriteStatus = -1;
+                                failedCount++;
+                            }
+                            finally
+                            {
+                                tagdb.Repaint();
+                            }
+                        }));
+                    }
+                }
+
+                
+
+                Dispatcher.Invoke(new del(delegate ()
+                {
+                    MessageBox.Show("Success= " + successCount + " Failed= " + failedCount, "写标签", MessageBoxButton.OK, MessageBoxImage.Information);
+                }));
+                batch_write_button.Content = "Write";
+                gpi_detect_stackpanel.IsEnabled = true;
+                btnRead.IsEnabled = true;
+                writing_status_label.Content = "";
+            }
+            else if (batch_write_button.Content.Equals("StopWriting"))
+            {
+                batch_write_button.Content = "Write";
+                gpi_detect_stackpanel.IsEnabled = true;
+                btnRead.IsEnabled = true;
+            }
+        }
+
+        private void WriteEPC(TagFilter filter, string epc)
+        {
+            objReader.ParamSet("/reader/tagop/protocol", TagProtocol.GEN2);
+            if (validateWriteEPCLength(epc))
+            {
+                objReader.WriteTag(filter, new TagData(epc));
+            }
+            else
+            {
+                return;
+            }
+        }
+
+        private bool validateWriteEPCLength(string validEPC)
+        {
+            if (validEPC.Equals(""))
+            {
+                MessageBoxResult result = MessageBox.Show("Attempting to write an empty EPC.Do you want proceed ?",
+                    "Universal Reader Assistant", MessageBoxButton.OKCancel, MessageBoxImage.Warning);
+                if (result == MessageBoxResult.Cancel)
+                {
+                    return false;
+                }
+            }
+            if (((validEPC.Length % 4) != 0) || validEPC.Contains(" "))
+            {
+                MessageBox.Show("Please enter a valid New EPC", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                return false;
+            }
+            else
+            {
+                return true;
+            }
+        }
+
     }
 }
