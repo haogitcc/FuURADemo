@@ -16066,6 +16066,7 @@ namespace ThingMagic.URA2
             int dataLength = 0;
             int antenna = 0;
             Gen2.Bank selectMemBank = Gen2.Bank.EPC;
+            TagFilter searchSelect = null;
 
             if (batch_write_button.Content.Equals("Write"))
             {
@@ -16088,8 +16089,6 @@ namespace ThingMagic.URA2
                         {
                             try
                             {
-                                TagFilter searchSelect = null;
-
                                 if (mf.DataRaw.Length == 0)
                                 {
                                     searchSelect = new TagData(mf.EPC);
@@ -16121,8 +16120,57 @@ namespace ThingMagic.URA2
                             catch (Exception ex)
                             {
                                 //MessageBox.Show(ex.Message, "Error [" + mf.EPC + "]", MessageBoxButton.OK, MessageBoxImage.Error);
-                                mf.WriteStatus = -1;
-                                failedCount++;
+                                if(ex.Message.Equals("No tags found."))
+                                {
+                                    try
+                                    {
+                                        if (mf.DataRaw.Length == 0)
+                                        {
+                                            searchSelect = new TagData(mf.EPC);
+                                            selectMemBank = Gen2.Bank.EPC;
+                                        }
+                                        else
+                                        {
+                                            if (chkEmbeddedReadData.IsChecked == true && cbxReadDataBank.Text == "TID")
+                                            {
+                                                startAddress = uint.Parse(txtembReadStartAddr.Text);
+                                                byte[] SearchSelectData = ByteFormat.FromHex(mf.DataRaw);
+                                                if (null == SearchSelectData)
+                                                {
+                                                    dataLength = 0;
+                                                }
+                                                else
+                                                {
+                                                    dataLength = SearchSelectData.Length;
+                                                }
+
+                                                searchSelect = new Gen2.Select(false, selectMemBank, startAddress, Convert.ToUInt16(dataLength * 8), SearchSelectData);
+                                                selectMemBank = Gen2.Bank.TID;
+                                            }
+                                        }
+                                        WriteEPC(searchSelect, mf.NewEPC);
+                                        mf.WriteStatus = 1;
+                                        successCount++;
+                                    }
+                                    catch (Exception ex1)
+                                    {
+                                        //MessageBox.Show(ex.Message, "Error [" + mf.EPC + "]", MessageBoxButton.OK, MessageBoxImage.Error);
+                                        if (ex.Message.Equals("No tags found."))
+                                        {
+
+                                        }
+                                        else
+                                        {
+                                            mf.WriteStatus = -1;
+                                            failedCount++;
+                                        }
+                                    }
+                                }
+                                else
+                                {
+                                    mf.WriteStatus = -1;
+                                    failedCount++;
+                                }
                             }
                             finally
                             {
