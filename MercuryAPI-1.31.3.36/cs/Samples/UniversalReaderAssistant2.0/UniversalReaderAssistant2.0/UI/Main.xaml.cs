@@ -2726,6 +2726,7 @@ namespace ThingMagic.URA2
                         tiLockTag.IsEnabled = false;
                         tiUntraceable.IsEnabled = false;
                         tiAuthenticate.IsEnabled = false;
+                        tiSensorTags.IsEnabled = false;
                         tiTagResults.Focus();
 
                         // Reset protocols
@@ -2962,6 +2963,7 @@ namespace ThingMagic.URA2
                 tiLockTag.IsEnabled = true;
                 tiUntraceable.IsEnabled = true;
                 tiAuthenticate.IsEnabled = true;
+                tiSensorTags.IsEnabled = true;
 
                 GUIturnoffWarning();
 
@@ -8943,6 +8945,13 @@ namespace ThingMagic.URA2
                     tiUntraceable.Visibility = Visibility.Visible;
                     Authenticate.LoadAuthenticateMemory(objReader, startAddressToUC, memBankToUC, tagRead, model);
                     break;
+
+                //case "Sensor Tags":
+                //    Console.WriteLine("**** MenuItem_Click");
+                //    tiSensorTags.Focus();
+                //    tiSensorTags.Visibility = Visibility.Visible;
+                //    SensorTags.LoadSensorTagsMemory(objReader, model);
+                //    break;
             }
         }
 
@@ -8986,6 +8995,8 @@ namespace ThingMagic.URA2
 
             //set default values for Authenticate tab
             Authenticate.ResetAuthenticateTab();
+
+            SensorTags.ResetSensorTagsTab();
         }
 
         /// <summary>
@@ -9192,6 +9203,20 @@ namespace ThingMagic.URA2
             ataCheckBox.IsEnabled = false;
             isoUcodeCheckbox.IsEnabled = false;
             TagResults.dgTagResults.UnselectAll();
+        }
+
+        /// <summary>
+        /// Authenticate tab initialization
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void tiSensorTags_GotFocus(object sender, RoutedEventArgs e)
+        {
+            //Console.WriteLine("tiSensorTags_GotFocus ...");
+            List<int> antlist = GetSelectedAntennaList();
+            SensorTags.LoadSensorTagsMemory(objReader, model, antlist);
+            tiSensorTags.Focus();
+
         }
 
         /// <summary>

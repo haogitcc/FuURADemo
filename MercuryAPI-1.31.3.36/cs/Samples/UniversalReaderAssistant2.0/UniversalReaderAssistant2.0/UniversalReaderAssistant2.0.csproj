@@ -147,6 +147,9 @@
     <Compile Include="UI\UserControls\ucLockTag.xaml.cs">
       <DependentUpon>ucLockTag.xaml</DependentUpon>
     </Compile>
+    <Compile Include="UI\UserControls\ucSensorTags.xaml.cs">
+      <DependentUpon>ucSensorTags.xaml</DependentUpon>
+    </Compile>
     <Compile Include="UI\UserControls\ucTagInspector.xaml.cs">
       <DependentUpon>ucTagInspector.xaml</DependentUpon>
     </Compile>
@@ -226,6 +229,10 @@
       <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Include="UI\UserControls\ucLockTag.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="UI\UserControls\ucSensorTags.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>

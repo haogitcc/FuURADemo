@@ -21,6 +21,8 @@ namespace ThingMagic.URA2.BL
         //protected string dataInReverseBase36 = null;
         protected string newEpc = "";
         protected int writeStatus = 0;
+        protected double temperature = 0.0;
+        protected bool isSensorTags = false;
         public TagReadRecord(TagReadData newData)
         {
             lock (new Object())
@@ -34,6 +36,7 @@ namespace ThingMagic.URA2.BL
         /// <param name="data">New tag read</param>
         public void Update(TagReadData mergeData)
         {
+            Console.WriteLine("*** Update " + mergeData.EpcString);
             mergeData.ReadCount += ReadCount;
             TimeSpan timediff = mergeData.Time.ToUniversalTime() - this.TimeStamp.ToUniversalTime();
             // Update only the read counts and not overwriting the tag
@@ -47,6 +50,13 @@ namespace ThingMagic.URA2.BL
             {
                 RawRead.ReadCount = mergeData.ReadCount;
             }
+
+            Console.WriteLine("Update isSensorTags=" + isSensorTags);
+            if (isSensorTags)
+            {
+                temperature = getTemperature(mergeData);
+            }
+
             OnPropertyChanged(null);
         }
 
@@ -202,6 +212,80 @@ namespace ThingMagic.URA2.BL
             }
         }
 
+        public double Temperature
+        {
+            get { return temperature; }
+            set
+            {
+                Console.WriteLine("#### set Temperature= " + value);
+                temperature = value;
+            }
+        }
+
+        private double getTemperature(TagReadData RawRead)
+        {
+            Console.WriteLine("*** getTemperature IsSensorTags=" + IsSensorTags);
+            double temp = Temperature;
+            if(IsSensorTags)
+            {
+                if (RawRead.Data.Length > 0)
+                {
+                    Console.WriteLine(ByteFormat.ToHex(RawRead.Data, "", " "));
+                    int delta1 = 0;
+                    double delta2 = 0;
+                    delta1 = byteArrayToInt(RawRead.Data, 0);
+                    delta2 = delta1 / 100d - 101d;
+                    Console.WriteLine("d1=" + delta1 + ", d2=" + delta2);
+
+                    //2A54 0000 0000 0000 F70B F045
+                    byte[] bepc = RawRead.Tag.EpcBytes;
+                    byte[] s06 = new byte[] { bepc[8], bepc[9] };
+                    byte[] s07 = new byte[] { bepc[10], bepc[11] };
+                    Console.WriteLine("s06=" + ByteFormat.ToHex(s06, "", ""));
+                    Console.WriteLine("s07=" + ByteFormat.ToHex(s07, "", ""));
+
+                    string s_SEN_DATA = ByteFormat.ToHex(s06, "", "").Substring(1) + ByteFormat.ToHex(s07, "", "").Substring(1);
+                    Console.WriteLine("s_SEN_DATA=" + s_SEN_DATA);
+
+                    //int i_SEN_DATA = int.Parse(s_SEN_DATA, System.Globalization.NumberStyles.HexNumber);
+                    int i_SEN_DATA = Convert.ToInt32(s_SEN_DATA, 16);
+                    Console.WriteLine("i_SEN_DATA=" + i_SEN_DATA);
+
+                    double D1 = (i_SEN_DATA & 0x00F80000) >> 19;
+                    double D2 = ((i_SEN_DATA & 0x0007FFF8) >> 3) & 0x0000FFFF;
+                    Console.WriteLine("D1=" + D1 + ", D2=" + D2);
+                    Console.WriteLine(11984.47 + ":" + (21.25 + D1 + D2 / 2752 + delta2));
+                    double temperature = 11984.47 / (21.25 + D1 + (D2 / 2752) + delta2) - 301.57;
+                    Console.WriteLine("temperature=" + temperature);
+                    Console.WriteLine();
+                    temp = temperature;
+                }
+                    return temp;
+            }
+            return temp;
+        }
+
+        private static int byteArrayToInt(byte[] data, int offset)
+        {
+            int value = 0;
+            int len = data.Length;
+            for (int count = 0; count < len; count++)
+            {
+                value <<= 8;
+                value ^= (data[count + offset] & 0x000000FF);
+            }
+            return value;
+        }
+
+        public bool IsSensorTags
+        {
+            get { return isSensorTags; }
+            set
+            {
+                isSensorTags = value;
+            }
+        }
+
         #region INotifyPropertyChanged Members
 
         public event PropertyChangedEventHandler PropertyChanged;
@@ -330,6 +414,16 @@ namespace ThingMagic.URA2.BL
                         return a.WriteStatus - b.WriteStatus;
                     });
                     break;
+                case "Temperature":
+                    comparer = new Comparison<TagReadRecord>(delegate (TagReadRecord a, TagReadRecord b)
+                    {
+                        Console.WriteLine("#### compare Temperature");
+                        if (a.Temperature - b.Temperature != 0)
+                            return 1;
+                        else
+                            return 0;
+                    });
+                    break;
             }
             return comparer;
         }
@@ -389,6 +483,8 @@ namespace ThingMagic.URA2.BL
             get { return TotalTagCounts; }
         }
 
+        public bool IsTagdbSensortags { get; set; }
+
         public void Clear()
         {
             EpcIndex.Clear();
@@ -405,37 +501,45 @@ namespace ThingMagic.URA2.BL
             {
                 string key = null;
 
-                if (chkbxUniqueByData)
+                if(IsTagdbSensortags)
                 {
-                    if (true == chkbxShowFailedDataReads)
-                    {
-                        //key = addData.EpcString + ByteFormat.ToHex(addData.Data, "", " ");
-                        // When CHECKED - Add the entry to the database. This will result in
-                        // potentially two entries for every tag: one with the requested data and one without.
-                        if (addData.Data.Length > 0)
-                        {
-                            key = addData.EpcString + ByteFormat.ToHex(addData.Data, "", " ");
-                        }
-                        else
-                        {
-                            key = addData.EpcString + "";
-                        }
-
-                    }
-                    else if ((false == chkbxShowFailedDataReads) && (addData.Data.Length == 0))
-                    {
-                        // When UNCHECKED (default) - If the embedded read data fails (data.length==0) then don't add the entry to
-                        // the database, thus it won't be displayed.
-                        return;
-                    }
-                    else
-                    {
-                        key = addData.EpcString + ByteFormat.ToHex(addData.Data, "", " ");
-                    }
+                    key = addData.EpcString.Substring(0, 4);
+                    Console.WriteLine("*** tagdb add key=" + key);
                 }
                 else
                 {
-                    key = addData.EpcString; //if only keying on EPCID
+                    if (chkbxUniqueByData)
+                    {
+                        if (true == chkbxShowFailedDataReads)
+                        {
+                            //key = addData.EpcString + ByteFormat.ToHex(addData.Data, "", " ");
+                            // When CHECKED - Add the entry to the database. This will result in
+                            // potentially two entries for every tag: one with the requested data and one without.
+                            if (addData.Data.Length > 0)
+                            {
+                                key = addData.EpcString + ByteFormat.ToHex(addData.Data, "", " ");
+                            }
+                            else
+                            {
+                                key = addData.EpcString + "";
+                            }
+
+                        }
+                        else if ((false == chkbxShowFailedDataReads) && (addData.Data.Length == 0))
+                        {
+                            // When UNCHECKED (default) - If the embedded read data fails (data.length==0) then don't add the entry to
+                            // the database, thus it won't be displayed.
+                            return;
+                        }
+                        else
+                        {
+                            key = addData.EpcString + ByteFormat.ToHex(addData.Data, "", " ");
+                        }
+                    }
+                    else
+                    {
+                        key = addData.EpcString; //if only keying on EPCID
+                    }
                 }
                 //if (chkbxUniqueByAntenna)
                 //{
@@ -448,22 +552,84 @@ namespace ThingMagic.URA2.BL
 
                 UniqueTagCounts = 0;
                 TotalTagCounts = 0;
-
+                
                 if (!EpcIndex.ContainsKey(key))
                 {
                     TagReadRecord value = new TagReadRecord(addData);
                     value.SerialNumber = (uint)EpcIndex.Count + 1;
+                    if(IsTagdbSensortags)
+                    {
+                        value.Temperature = tagdbGetTemperature(addData); //ToDo add temperature
+                        value.IsSensorTags = true;
+                    }
+
                     _tagList.Add(value);
                     EpcIndex.Add(key, value);
                     //Call this method to calculate total tag reads and unique tag read counts 
                     UpdateTagCountTextBox(EpcIndex);
+                    Console.WriteLine("tagdb add ["+key+"]");
                 }
                 else
                 {
-                    EpcIndex[key].Update(addData);
+                    EpcIndex[key].Update(addData); //ToDo update temperature
                     UpdateTagCountTextBox(EpcIndex);
                 }
             }
+        }
+
+        private double tagdbGetTemperature(TagReadData RawRead)
+        {
+            Console.WriteLine("*** tagdbGetTemperature IsTagdbSensortags=" + IsTagdbSensortags);
+            double temp = 0.0;
+            if (IsTagdbSensortags)
+            {
+                if (RawRead.Data.Length > 0)
+                {
+                    Console.WriteLine(ByteFormat.ToHex(RawRead.Data, "", " "));
+                    int delta1 = 0;
+                    double delta2 = 0;
+                    delta1 = tagdbByteArrayToInt(RawRead.Data, 0);
+                    delta2 = delta1 / 100d - 101d;
+                    Console.WriteLine("d1=" + delta1 + ", d2=" + delta2);
+
+                    //2A54 0000 0000 0000 F70B F045
+                    byte[] bepc = RawRead.Tag.EpcBytes;
+                    byte[] s06 = new byte[] { bepc[8], bepc[9] };
+                    byte[] s07 = new byte[] { bepc[10], bepc[11] };
+                    Console.WriteLine("s06=" + ByteFormat.ToHex(s06, "", ""));
+                    Console.WriteLine("s07=" + ByteFormat.ToHex(s07, "", ""));
+
+                    string s_SEN_DATA = ByteFormat.ToHex(s06, "", "").Substring(1) + ByteFormat.ToHex(s07, "", "").Substring(1);
+                    Console.WriteLine("s_SEN_DATA=" + s_SEN_DATA);
+
+                    //int i_SEN_DATA = int.Parse(s_SEN_DATA, System.Globalization.NumberStyles.HexNumber);
+                    int i_SEN_DATA = Convert.ToInt32(s_SEN_DATA, 16);
+                    Console.WriteLine("i_SEN_DATA=" + i_SEN_DATA);
+
+                    double D1 = (i_SEN_DATA & 0x00F80000) >> 19;
+                    double D2 = ((i_SEN_DATA & 0x0007FFF8) >> 3) & 0x0000FFFF;
+                    Console.WriteLine("D1=" + D1 + ", D2=" + D2);
+                    Console.WriteLine(11984.47 + ":" + (21.25 + D1 + D2 / 2752 + delta2));
+                    double temperature = 11984.47 / (21.25 + D1 + (D2 / 2752) + delta2) - 301.57;
+                    Console.WriteLine("temperature=" + temperature);
+                    Console.WriteLine();
+                    temp = temperature;
+                }
+                return temp;
+            }
+            return temp;
+        }
+
+        private static int tagdbByteArrayToInt(byte[] data, int offset)
+        {
+            int value = 0;
+            int len = data.Length;
+            for (int count = 0; count < len; count++)
+            {
+                value <<= 8;
+                value ^= (data[count + offset] & 0x000000FF);
+            }
+            return value;
         }
 
         //Calculate total tag reads and unique tag reads.

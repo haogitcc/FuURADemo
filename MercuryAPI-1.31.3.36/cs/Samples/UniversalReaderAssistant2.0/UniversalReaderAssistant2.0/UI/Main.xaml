@@ -9,9 +9,11 @@
         xmlns:ucLockTag="clr-namespace:ThingMagic.URA2"
         xmlns:ucUntraceable="clr-namespace:ThingMagic.URA2"
         xmlns:ucAuthenticate="clr-namespace:ThingMagic.URA2"
+        xmlns:ucSensorTags="clr-namespace:ThingMagic.URA2.UI.UserControls"
         xmlns:xctk="http://schemas.xceed.com/wpf/xaml/toolkit"
         xmlns:ucFilters="clr-namespace:ThingMagic.URA2"
-        Icon="/UniversalReaderAssistant;component/Icons/jadakfaviconbg.ico" WindowStartupLocation="CenterScreen" Closing="Window_Closing" mc:Ignorable="d" xmlns:d="http://schemas.microsoft.com/expression/blend/2008" xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"  d:DesignHeight="768" d:DesignWidth="1024" DataContext="{Binding ElementName=tcTagResults}" WindowState="Maximized">
+        Icon="/UniversalReaderAssistant;component/Icons/jadakfaviconbg.ico" WindowStartupLocation="CenterScreen" Closing="Window_Closing" mc:Ignorable="d" xmlns:d="http://schemas.microsoft.com/expression/blend/2008" xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        d:DesignHeight="768" d:DesignWidth="1024" DataContext="{Binding ElementName=tcTagResults}" WindowState="Maximized">
     <Window.CommandBindings>
         <CommandBinding Command='ApplicationCommands.Help' Executed="CommandBinding_Executed" />
     </Window.CommandBindings>
@@ -49,7 +51,7 @@
                 <Label Margin="0,3,0,3" Content="Reader :" FontWeight="DemiBold" VerticalAlignment="Center"/>
                 <Label Margin="-5,3,3,3" ToolTipService.ShowOnDisabled="True" Content="" Height="28" Name="lblReaderUri" MinWidth="145" MaxWidth="300" Foreground="Black" ToolTip="Reader URI" VerticalAlignment="Center"/>
             </StackPanel>
-            
+
             <StackPanel Grid.Column="1" Orientation="Horizontal">
                 <Image Name="imgReaderStatus" Width="25" Height="25" HorizontalAlignment="Center" VerticalAlignment="Center" Source="/UniversalReaderAssistant;component/Icons/LedRed.png" />
                 <!--<Border Margin="0,3,0,3" VerticalAlignment="Center" x:Name="AnimatedColorButton" Width="25" Height="25" CornerRadius="25" BorderBrush="Gray" BorderThickness="1">
@@ -146,7 +148,7 @@
                     <Image Name="gpi30_status" Width="20" Height="20" Margin="4"  Source="/UniversalReaderAssistant;component/Icons/LedBlack.png" />
                     <Image Name="gpi31_status" Width="20" Height="20" Margin="4"  Source="/UniversalReaderAssistant;component/Icons/LedBlack.png" />
                 </StackPanel>
-                
+
             </StackPanel>
         </Grid>
         <StackPanel Height="4" Grid.Row="0" Orientation="Horizontal" DockPanel.Dock="Top">
@@ -184,7 +186,7 @@
                 </StackPanel>
             </Button>
         </StackPanel>
-        
+
         <!-- The Grid containing the three child Grids fills the DockPanel: -->
         <Grid Name="parentGrid" Grid.IsSharedSizeScope="True">
             <!-- Layer 0: -->
@@ -193,7 +195,7 @@
                     <ColumnDefinition Width="300*" />
                     <ColumnDefinition Width="150*" SharedSizeGroup="maincolu" />
                 </Grid.ColumnDefinitions>
-                
+
                 <TabControl Name="tcTagResults" Background="#9CAAC1">
                     <TabItem Name="tiTagResults" GotFocus="tiTagResults_GotFocus" >
                         <TabItem.Header>
@@ -356,7 +358,7 @@
                     <TabItem Name="tiAuthenticate" Background="Aqua" GotFocus ="tiAuthenticate_GotFocus">
                         <TabItem.Header>
                             <TextBlock Text="Authenticate" Margin="2">
-                               <TextBlock.ToolTip>
+                                <TextBlock.ToolTip>
                                     <StackPanel>
                                         <TextBlock FontWeight="Bold" FontSize="14" Margin="0,0,0,5">Authenticate (TabItem)</TextBlock>
                                         <TextBlock>The “Authenticate” Tab is used to both insert and activate keys, as well as<LineBreak /> authenticate tags and obtain encrypted data using those keys.</TextBlock>
@@ -366,12 +368,35 @@
                                             <TextBlock FontStyle="Italic">Press F1 for more help</TextBlock>
                                         </WrapPanel>
                                     </StackPanel>
-                               </TextBlock.ToolTip>
+                                </TextBlock.ToolTip>
                             </TextBlock>
                         </TabItem.Header>
                         <Grid Background="#E2EEFA">
                             <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
                                 <ucAuthenticate:ucAuthenticate x:Name="Authenticate" Width="auto" DataContext="{Binding}"/>
+                            </ScrollViewer>
+                        </Grid>
+                    </TabItem>
+
+                    <TabItem Name="tiSensorTags" Background="Aqua" GotFocus="tiSensorTags_GotFocus">
+                        <TabItem.Header>
+                            <TextBlock Text="Sensor Tags" Margin="2">
+                                <TextBlock.ToolTip>
+                                    <StackPanel>
+                                        <TextBlock FontWeight="Bold" FontSize="14" Margin="0,0,0,5">Sensor Tags (TabItem)</TextBlock>
+                                        <TextBlock>Sensor Tags:<LineBreak />Johar Sensor Tag</TextBlock>
+                                        <Border BorderBrush="Silver" BorderThickness="0,1,0,0" Margin="0,8" />
+                                        <WrapPanel>
+                                            <!--<Image Source="/WpfTutorialSamples;component/Images/help.png" Margin="0,0,5,0" />-->
+                                            <TextBlock FontStyle="Italic">Press F1 for more help</TextBlock>
+                                        </WrapPanel>
+                                    </StackPanel>
+                                </TextBlock.ToolTip>
+                            </TextBlock>
+                        </TabItem.Header>
+                        <Grid Background="#E2EEFA">
+                            <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto" >
+                                <ucSensorTags:ucSensorTags x:Name="SensorTags" Width="auto"/>
                             </ScrollViewer>
                         </Grid>
                     </TabItem>
@@ -396,12 +421,12 @@
                                 <Image Name="pane1PinImage" Source="..\Icons\pinHorizontal.gif"/>
                             </Button>
                             <TextBlock  Padding="8" FontWeight="Bold" TextTrimming="CharacterEllipsis" Foreground="{StaticResource {x:Static SystemColors.ActiveCaptionTextBrushKey}}" DockPanel.Dock="Left">
-                            <TextBlock.Background>
-                                <LinearGradientBrush>
+                                <TextBlock.Background>
+                                    <LinearGradientBrush>
                                         <GradientStop Color="#DCE0E8" Offset="0"/>
                                         <GradientStop Color="#D9DDE7" Offset="1"/>
-                                </LinearGradientBrush>                                
-                            </TextBlock.Background>                            
+                                    </LinearGradientBrush>
+                                </TextBlock.Background>                            
                             <StackPanel Orientation="Horizontal">
                                     <Image Source="..\Icons\Settings.png" Stretch="None" />
                                     <TextBlock FontSize="14" FontFamily="Segoe UI" Margin="5,0,0,0">Settings/Status</TextBlock>
@@ -498,7 +523,7 @@
                                                             <ComboBoxItem Content="460800" />
                                                             <ComboBoxItem Content="921600" />
                                                         </ComboBox>
-                                                      
+
                                                         <GroupBox Grid.Row="7" Grid.Column="0" Grid.ColumnSpan="4" Margin="3" Name="grpbxLoadSaveConfig" BorderThickness="1" BorderBrush="Black" VerticalAlignment="Top" Header="Load/Save Profile">
                                                             <StackPanel Orientation="Horizontal" VerticalAlignment="Top">
                                                                 <Button Margin="0,2,4,2" ToolTipService.ShowOnDisabled="True" 
@@ -588,7 +613,7 @@
                                                         <TextBox Grid.Row="1" Grid.Column="3" Grid.RowSpan="4" Grid.ColumnSpan="2" MaxWidth="300" Margin="13,2,2,2"
                                                          Name="txtbxHopTable_Cnot"  TextWrapping="Wrap" PreviewTextInput="txtbxHopTable_PreviewTextInput" 
                                                                  Text="{Binding ElementName=txtbxHopTable, Path=Text, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" PreviewLostKeyboardFocus="txtbxHopTable_Cnot_PreviewLostKeyboardFocus" TextChanged="txtbxHopTable_Cnot_TextChanged" />
-                                                        
+
                                                         <!--<Button Grid.Row="4"  Grid.Column="2" Margin="0,2,2,2" ToolTipService.ShowOnDisabled="True" 
                                                             ToolTip="Apply custom region configurations"  Visibility="Visible"
                                                             Name="btnRegionConfig" Width="60" Height="25" 
@@ -599,7 +624,7 @@
                                         </TabItem>
                                     </TabControl>
 
-                                   
+
                                 </Expander>
                                 <Expander Expanded="expdrPerformanceTuning_Expanded" Name="expdrReadOptions" BorderBrush="Black" BorderThickness="1" IsExpanded="False">
                                     <Expander.Header>
@@ -639,7 +664,7 @@
                                                     <StackPanel Name="stackPanel7" Orientation="Vertical">
                                                         <StackPanel Orientation="Horizontal" Name="stkpAntennas" Margin="2">
                                                             <StackPanel Name="stackPanel20" Orientation="Vertical" Margin="2">
-                                                                
+
                                                                 <GroupBox Header="Switching Method" Name="SwitchingMethodGroupBox" BorderThickness="1" BorderBrush="Black">
                                                                     <StackPanel Name="stackPanel21" Orientation="Vertical" Margin="2">
                                                                         <RadioButton VerticalAlignment="Center" ToolTipService.ShowOnDisabled="True" GroupName="rdrAntSwitching" Margin="0,0,2,2" IsChecked="True" Content="Equal Time  "  Name="rdBtnEqualSwitching" >
@@ -672,31 +697,31 @@
                                                                 <Label Width="15"></Label>
                                                                 <StackPanel Orientation="Vertical">
                                                                     <CheckBox Name="cbxAntennamux" Content="Antenna Multiplexing" Checked="cbxAntennamux_Checked" Unchecked="cbxAntennamux_Checked">
-                                                                    <CheckBox.Resources>
-                                                                        <Style TargetType="CheckBox">
-                                                                            <Style.Triggers>
-                                                                                <DataTrigger Binding="{Binding ElementName=lblRFIDEngineContent, Path=Content}" Value="Sargas">
-                                                                                    <Setter Property="Visibility" Value="Collapsed"/>
-                                                                                </DataTrigger>
-                                                                                <DataTrigger Binding="{Binding ElementName=lblRFIDEngineContent, Path=Content}" Value="Izar">
-                                                                                    <Setter Property="Visibility" Value="Collapsed"/>
-                                                                                </DataTrigger>
-                                                                            </Style.Triggers>
-                                                                        </Style>
-                                                                    </CheckBox.Resources>
-                                                                </CheckBox>
-                                                                <StackPanel Orientation="Vertical" Name="stkAntennaMux">
-                                                                    <Label Height="10"></Label>
-                                                                    <StackPanel Orientation="Horizontal" Name="stkPins12">
-                                                                        <CheckBox Name="chbxOne" Content="GPO1" Margin="2" Visibility="Collapsed" Checked="chbxOne_Checked" Unchecked="chbxOne_Checked"></CheckBox>
-                                                                        <Label Width="5"></Label>
-                                                                        <CheckBox Name="chbxTwo" Content="GPO2" Margin="2" Visibility="Collapsed" Checked="chbxTwo_Checked" Unchecked="chbxTwo_Checked"></CheckBox>
-                                                                    </StackPanel>
-                                                                    <StackPanel Orientation="Horizontal" Name="stkPins34">
-                                                                        <CheckBox Name="chbxThree" Content="GPO3" Margin="2" Visibility="Collapsed" Checked="chbxThree_Checked" Unchecked="chbxThree_Checked"></CheckBox>
-                                                                        <Label Width="5"></Label>
-                                                                        <CheckBox Name="chbxFour" Content="GPO4" Margin="2" Visibility="Collapsed" Checked="chbxFour_Checked" Unchecked="chbxFour_Checked"></CheckBox>
-                                                                    </StackPanel>
+                                                                        <CheckBox.Resources>
+                                                                            <Style TargetType="CheckBox">
+                                                                                <Style.Triggers>
+                                                                                    <DataTrigger Binding="{Binding ElementName=lblRFIDEngineContent, Path=Content}" Value="Sargas">
+                                                                                        <Setter Property="Visibility" Value="Collapsed"/>
+                                                                                    </DataTrigger>
+                                                                                    <DataTrigger Binding="{Binding ElementName=lblRFIDEngineContent, Path=Content}" Value="Izar">
+                                                                                        <Setter Property="Visibility" Value="Collapsed"/>
+                                                                                    </DataTrigger>
+                                                                                </Style.Triggers>
+                                                                            </Style>
+                                                                        </CheckBox.Resources>
+                                                                    </CheckBox>
+                                                                    <StackPanel Orientation="Vertical" Name="stkAntennaMux">
+                                                                        <Label Height="10"></Label>
+                                                                        <StackPanel Orientation="Horizontal" Name="stkPins12">
+                                                                            <CheckBox Name="chbxOne" Content="GPO1" Margin="2" Visibility="Collapsed" Checked="chbxOne_Checked" Unchecked="chbxOne_Checked"></CheckBox>
+                                                                            <Label Width="5"></Label>
+                                                                            <CheckBox Name="chbxTwo" Content="GPO2" Margin="2" Visibility="Collapsed" Checked="chbxTwo_Checked" Unchecked="chbxTwo_Checked"></CheckBox>
+                                                                        </StackPanel>
+                                                                        <StackPanel Orientation="Horizontal" Name="stkPins34">
+                                                                            <CheckBox Name="chbxThree" Content="GPO3" Margin="2" Visibility="Collapsed" Checked="chbxThree_Checked" Unchecked="chbxThree_Checked"></CheckBox>
+                                                                            <Label Width="5"></Label>
+                                                                            <CheckBox Name="chbxFour" Content="GPO4" Margin="2" Visibility="Collapsed" Checked="chbxFour_Checked" Unchecked="chbxFour_Checked"></CheckBox>
+                                                                        </StackPanel>
                                                                     </StackPanel>
                                                                 </StackPanel>
                                                             </StackPanel>
@@ -866,7 +891,7 @@
                                                             <CheckBox Content="ATA" Name="ataCheckBox" Margin="2" Checked="ataCheckBox_CheckedChanged" Unchecked="ataCheckBox_CheckedChanged"/>
                                                         </StackPanel>
                                                     </StackPanel>
-                                                </GroupBox>                                                
+                                                </GroupBox>
                                                 <GroupBox Header="Embedded ReadData" Name="ReadDataGroupBox" BorderThickness="1" BorderBrush="Black">
                                                     <StackPanel Name="stackPanel17">
                                                         <CheckBox Unchecked="chkEmbeddedReadData_Unchecked" Content="Enable" Margin="2" Name="chkEmbeddedReadData"  ToolTipService.ShowOnDisabled="True" ToolTip="Add an embedded ReadData TagOp to Inventory"/>
@@ -910,8 +935,8 @@
                                                         <ucFilters:ucFilters x:Name="MultiFilters1" Grid.Column="0" Grid.Row="1" Width="auto" DataContext="{Binding}" Visibility="{Binding ElementName=chkApplyFilter1, Path=IsChecked, Converter={StaticResource boolToVisible}}" />
                                                         <ucFilters:ucFilters x:Name="MultiFilters2" Grid.Column="1" Grid.Row="1" Width="auto" DataContext="{Binding}" Visibility="{Binding ElementName=chkApplyFilter2, Path=IsChecked, Converter={StaticResource boolToVisible}}"/>
                                                         <ucFilters:ucFilters x:Name="MultiFilters3" Grid.Column="2" Grid.Row="1" Width="auto" DataContext="{Binding}" Visibility="{Binding ElementName=chkApplyFilter3, Path=IsChecked, Converter={StaticResource boolToVisible}}" />
-                                                    </Grid>                                                   
-                                                    
+                                                    </Grid>
+
                                                     <!--<StackPanel Name="stackPanelGrpBox">
                                                         <Grid HorizontalAlignment="Left" >
                                                            <Grid.ColumnDefinitions>
@@ -1012,7 +1037,7 @@
                                                                 </CheckBox.Resources>
                                                             </CheckBox>
                                                         </StackPanel>
-                                                    </StackPanel>--> 
+                                                    </StackPanel>-->
                                                 </GroupBox>
 
                                             </StackPanel>
@@ -1023,23 +1048,23 @@
                                     <Expander Name="expdrPerformanceTuning" BorderBrush="Black" BorderThickness="1" Expanded="expdrPerformanceTuning_Expanded">
                                         <Expander.Header>
                                             <TextBlock Text="Performance Tuning" Margin="5">
-                                            <TextBlock.ToolTip>
-                                                <StackPanel>
-                                                    <TextBlock FontWeight="Bold" FontSize="14" Margin="0,0,0,5">Performance Tuning</TextBlock>
-                                                    <TextBlock>
+                                                <TextBlock.ToolTip>
+                                                    <StackPanel>
+                                                        <TextBlock FontWeight="Bold" FontSize="14" Margin="0,0,0,5">Performance Tuning</TextBlock>
+                                                        <TextBlock>
                                                         This section provides a set of options,
                                                         <LineBreak />
                                                         based on high-level usecase characteristics, 
                                                         <LineBreak />
                                                         allowing the reader performance to be optimized.
-                                                    </TextBlock>
-                                                    <Border BorderBrush="Silver" BorderThickness="0,1,0,0" Margin="0,8" />
-                                                    <WrapPanel>
-                                                        <!--<Image Source="/WpfTutorialSamples;component/Images/help.png" Margin="0,0,5,0" />-->
-                                                        <TextBlock FontStyle="Italic">Press F1 for more help</TextBlock>
-                                                    </WrapPanel>
-                                                </StackPanel>
-                                            </TextBlock.ToolTip>
+                                                        </TextBlock>
+                                                        <Border BorderBrush="Silver" BorderThickness="0,1,0,0" Margin="0,8" />
+                                                        <WrapPanel>
+                                                            <!--<Image Source="/WpfTutorialSamples;component/Images/help.png" Margin="0,0,5,0" />-->
+                                                            <TextBlock FontStyle="Italic">Press F1 for more help</TextBlock>
+                                                        </WrapPanel>
+                                                    </StackPanel>
+                                                </TextBlock.ToolTip>
                                         </TextBlock>
                                         </Expander.Header>
                                         <Expander.Background>
@@ -1220,23 +1245,23 @@
                                                                                         <RowDefinition Height="Auto" />
                                                                                     </Grid.RowDefinitions>-->
                                                                                     <!--<StackPanel Orientation="Vertical" x:Name="gridPanelQ" >-->
-                                                                                     
-                                                                                        <RadioButton GroupName="QGrp"  Grid.Row="0" Grid.Column="0" Checked="btnSaveGen2Settings_Click" x:Name="StaticQ" Content="StaticQ" Margin="3" HorizontalAlignment="Left" VerticalAlignment="Center" />
-                                                                                        <ComboBox x:Name="Qvalue" Width="60"  Grid.Row="0" Grid.Column="1" SelectionChanged="btnSaveGen2Settings_Click" Text="" Margin="3" HorizontalAlignment="Left" VerticalAlignment="Center">
-                                                                                            <ComboBoxItem Content="0" />
-                                                                                            <ComboBoxItem Content="1" />
-                                                                                            <ComboBoxItem Content="2" />
-                                                                                            <ComboBoxItem Content="3" />
-                                                                                            <ComboBoxItem Content="4" />
-                                                                                            <ComboBoxItem Content="5" />
-                                                                                            <ComboBoxItem Content="6" />
-                                                                                            <ComboBoxItem Content="7" />
-                                                                                            <ComboBoxItem Content="8" />
-                                                                                            <ComboBoxItem Content="9" />
-                                                                                            <ComboBoxItem Content="10" />
-                                                                                            <ComboBoxItem Content="11" />
-                                                                                            <ComboBoxItem Content="12" />
-                                                                                            <ComboBoxItem Content="13" />
+
+                                                                                    <RadioButton GroupName="QGrp"  Grid.Row="0" Grid.Column="0" Checked="btnSaveGen2Settings_Click" x:Name="StaticQ" Content="StaticQ" Margin="3" HorizontalAlignment="Left" VerticalAlignment="Center" />
+                                                                                    <ComboBox x:Name="Qvalue" Width="60"  Grid.Row="0" Grid.Column="1" SelectionChanged="btnSaveGen2Settings_Click" Text="" Margin="3" HorizontalAlignment="Left" VerticalAlignment="Center">
+                                                                                        <ComboBoxItem Content="0" />
+                                                                                        <ComboBoxItem Content="1" />
+                                                                                        <ComboBoxItem Content="2" />
+                                                                                        <ComboBoxItem Content="3" />
+                                                                                        <ComboBoxItem Content="4" />
+                                                                                        <ComboBoxItem Content="5" />
+                                                                                        <ComboBoxItem Content="6" />
+                                                                                        <ComboBoxItem Content="7" />
+                                                                                        <ComboBoxItem Content="8" />
+                                                                                        <ComboBoxItem Content="9" />
+                                                                                        <ComboBoxItem Content="10" />
+                                                                                        <ComboBoxItem Content="11" />
+                                                                                        <ComboBoxItem Content="12" />
+                                                                                        <ComboBoxItem Content="13" />
                                                                                         <ComboBoxItem Content="14" />
                                                                                         <ComboBoxItem Content="15" />
                                                                                     </ComboBox>
@@ -1653,15 +1678,15 @@
                                                                     <StackPanel Height="Auto" Name="stckpnlC" Width="Auto" Orientation="Horizontal">
                                                                         <RadioButton Grid.Row="1" Grid.Column="1" x:Name="rdbtnCW" Content="CW" Margin="3" IsChecked="True" VerticalContentAlignment="Center" GroupName="grpbxContinous" />
                                                                         <RadioButton Grid.Row="2" Grid.Column="1" x:Name="rdbtnPRBS" Content="PRBS" Margin="3" VerticalContentAlignment="Center" GroupName="grpbxContinous" />
-                                                                      </StackPanel>
+                                                                    </StackPanel>
                                                                 </GroupBox>
                                                                 <StackPanel Height="Auto" Name="stckpnlCON" Width="Auto" Orientation="Horizontal">
                                                                     <Label Content="ON Time (ms) :" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="3" Name="lblCwONTime" />
                                                                     <TextBox Grid.Column="1" Text="500" Margin="3" VerticalAlignment="Center" Name="txtbxCONTimeout" Width="70" TextChanged="txtbxTimeout_TextChanged" PreviewTextInput="txtRFOnTimeout_PreviewTextInput" PreviewLostKeyboardFocus="txtbxTimeout_PreviewLostKeyboardFocus"/>
                                                                     <Label Content="OFF Time (ms) :" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="3" Name="lblCwOFFTime" />
                                                                     <TextBox Grid.Column="1" Text="0" Margin="3" VerticalAlignment="Center" Name="txtbxCOFFTimeout" Width="70" TextChanged="txtbxTimeout_TextChanged" PreviewTextInput="txtRFOnTimeout_PreviewTextInput" PreviewLostKeyboardFocus="txtbxTimeout_PreviewLostKeyboardFocus"/>
-                                                                    <Button Name="btncwOn" Content="Start" Margin="3" VerticalAlignment="Center" Click="btnContinousOnOff_Click" />   
-                                                               </StackPanel>
+                                                                    <Button Name="btncwOn" Content="Start" Margin="3" VerticalAlignment="Center" Click="btnContinousOnOff_Click" />
+                                                                </StackPanel>
                                                             </StackPanel>
                                                         </Grid>
                                                     </TabItem>

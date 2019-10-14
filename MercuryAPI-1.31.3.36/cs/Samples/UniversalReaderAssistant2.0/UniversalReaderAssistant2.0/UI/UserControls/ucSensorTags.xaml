@@ -1,0 +1,133 @@
+﻿<UserControl x:Class="ThingMagic.URA2.UI.UserControls.ucSensorTags"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:local="clr-namespace:ThingMagic.URA2"
+             mc:Ignorable="d" 
+             d:DesignHeight="480" d:DesignWidth="980" DataContext="{Binding}">
+    <UserControl.Resources>
+        <local:IsEnabledConv x:Key="isEnabledConv" />
+    </UserControl.Resources>
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="640"/>
+            <ColumnDefinition Width="Auto"/>
+            <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="48"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+        <StackPanel Orientation="Horizontal" Grid.Row="0" Grid.ColumnSpan="3">
+            <Button Name="temp_read_button" Content="Read" Width="75" Margin="5" Click="Temp_read_button_Click"/>
+            <Button Name="temp_clear_button" Content="Clear" Width="75" Margin="5" Click="Temp_clear_button_Click"/>
+        </StackPanel>
+        <GroupBox Background="White" Grid.Row="1" Grid.ColumnSpan="1">
+            <GroupBox.Header>
+                <TextBlock FontWeight="Bold">TID</TextBlock>
+            </GroupBox.Header>
+            <Grid Width="Auto" >
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="25" />
+                    <RowDefinition Height="35" />
+                    <RowDefinition Height="35" />
+                    <RowDefinition Height="35" />
+                    <RowDefinition Height="*" />
+                </Grid.RowDefinitions>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+
+                <Label Grid.Row="0" Grid.Column="0" Content="Purpose :" Width="95"/>
+                <Label Grid.Row="1" Grid.Column="0" Content="combo (Hex) :" Width="95"/>
+                <Label Grid.Row="2" Grid.Column="0" Content="Value (Hex) :" Width="95"/>
+                <Label Grid.Row="3" Grid.Column="0" Content="Meaning :" Width="95"/>
+
+                <Label Grid.Row="0" Grid.Column="1" Content="ClsID" Width="45"/>
+                <ComboBox Name="class_id_combo" Grid.Row="1" Grid.Column="1" Margin="3" SelectionChanged="Class_id_combo_SelectionChanged"/>
+                <TextBox Name="class_id_textbox" Grid.Row="2" Grid.Column="1" Margin="3"/>
+                
+                <Label Grid.Row="0" Grid.Column="2" Content="Vendor ID"/>
+                <ComboBox Name="vendor_id_combo" Grid.Row="1" Grid.Column="2" Margin="3" Width="85" SelectionChanged="Vendor_id_combo_SelectionChanged" RenderTransformOrigin="0.501,0.507"/>
+                <TextBox Name="vendor_id_textbox" Grid.Row="2" Grid.Column="2" Margin="3" Width="85"/>
+                <TextBox Grid.Row="3" Grid.Column="2" Margin="3" Width="85"/>
+                
+                <Label Grid.Row="0" Grid.Column="3" Content="Model ID"/>
+                <ComboBox Name="model_id_combo" Grid.Row="1" Grid.Column="3" Margin="3" Width="101" SelectionChanged="Model_id_combo_SelectionChanged"/>
+                <TextBox Name="model_id_textbox" Grid.Row="2" Grid.Column="3" Margin="3" Width="101"/>
+                <TextBox Grid.Row="3" Grid.Column="3" Margin="3" Width="101"/>
+
+                <Label Grid.Row="0" Grid.Column="4" Content="Unique ID" Width="280"/>
+                <TextBox Name="unique_id_textbox" Grid.Row="2" Grid.Column="4" Margin="3" />
+                
+            </Grid>
+        </GroupBox>
+
+        <GroupBox Background="White" Grid.Row="1" Grid.Column="2"  Grid.RowSpan="2" BorderBrush="Black" BorderThickness="3">
+            <GroupBox.Header>
+                <TextBlock FontWeight="Bold"> EPC </TextBlock>
+            </GroupBox.Header>
+            <Grid Width="Auto" >
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="45" />
+                    <RowDefinition Height="*" />
+                </Grid.RowDefinitions>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+
+                <Grid Grid.Row="0" Grid.ColumnSpan="3">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+                    <Label Content="Unique Tags= " Grid.Column="0" Margin="5"/>
+                    <Label Name="unique_sensortags_count" Content="0" Grid.Column="1" Margin="5"/>
+                    <Label Content="Total Count= " Grid.Column="2" Margin="5"/>
+                    <Label Name="total_sensortags_read_count" Content="0" Grid.Column="3" Margin="5"/>
+                </Grid>
+
+                <DataGrid Name="temp_dgTagResults" Grid.Row="1" Grid.ColumnSpan="3" 
+                          CellStyle="{StaticResource Body_Content_DataGrid_Centering}" IsReadOnly="True" 
+                          VirtualizingStackPanel.IsVirtualizing="True" VirtualizingStackPanel.VirtualizationMode="Recycling"  
+                          ItemsSource="{Binding}" FontFamily="Arial" FontSize="12"
+                  Background="White" HorizontalScrollBarVisibility="Auto" IsTextSearchEnabled="True" 
+                          CanUserResizeColumns="True"  CanUserSortColumns="True" CanUserReorderColumns="False" 
+                  CanUserResizeRows="False" LoadingRow="temp_dgTagResults_LoadingRow"  LostFocus="temp_dgTagResults_LostFocus">
+                    <DataGrid.Columns>
+                        <DataGridTemplateColumn>
+                            <DataGridTemplateColumn.HeaderTemplate>
+                                <DataTemplate>
+                                    <CheckBox Checked="CheckBox_Checked" Unchecked="CheckBox_Unchecked" IsChecked="False" Name="headerCheckBox" MouseEnter="headerCheckBox_MouseEnter">
+                                    </CheckBox>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.HeaderTemplate>
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <CheckBox IsChecked="{Binding Path=Checked, UpdateSourceTrigger=PropertyChanged}" Name="theCheckbox"/>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+                        <DataGridTextColumn x:Name="serialNoColumn" Header="#" />
+                        <DataGridTextColumn x:Name="epcColumn"/>
+                        <DataGridTextColumn x:Name="antennaColumn"/>
+                        <DataGridTextColumn x:Name="TemperatureColumn" Visibility="Visible" />
+                    </DataGrid.Columns>
+                </DataGrid>
+                <TextBox Visibility="Collapsed" Name="txtSelectedCell" Width="1"></TextBox>
+            </Grid>
+        </GroupBox>
+    </Grid>
+</UserControl>
