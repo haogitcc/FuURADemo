@@ -5,8 +5,9 @@
     <ResourceDictionary>
       <ResourceDictionary.MergedDictionaries>
         <ResourceDictionary Source="Stylesheet\Stylesheet.xaml" />
+        <ResourceDictionary Source="Language\default.xaml" />
       </ResourceDictionary.MergedDictionaries>
-            <vm:ViewModelLocator x:Key="Locator" d:IsDataSource="True" xmlns:vm="clr-namespace:ThingMagic.URA2.ViewModel" />
-        </ResourceDictionary>
+      <vm:ViewModelLocator x:Key="Locator" d:IsDataSource="True" xmlns:vm="clr-namespace:ThingMagic.URA2.ViewModel" />
+    </ResourceDictionary>
   </Application.Resources>
 </Application>

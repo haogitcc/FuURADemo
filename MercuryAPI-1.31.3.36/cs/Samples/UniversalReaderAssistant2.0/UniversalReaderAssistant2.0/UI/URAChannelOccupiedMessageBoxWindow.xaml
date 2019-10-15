@@ -14,8 +14,9 @@
         <Image Margin="10,25,0,0" Name="img" Width="40" Height="35" Grid.Column="0" Grid.Row="0" HorizontalAlignment="Left" VerticalAlignment="Top"/>
         <TextBlock Margin="60,25,8,0" Width="Auto" TextWrapping="Wrap" Height="Auto" HorizontalAlignment="Left" VerticalAlignment="Top" TextAlignment="Justify" Grid.ColumnSpan="2">
            Channel Occupied Error. Please see the module's Hardware Guide for more details or contact
-            <Hyperlink NavigateUri="mailto:RFID-Support@jadaktech.com" RequestNavigate="Hyperlink_RequestNavigate" Tag="aaa">
-                RFID-Support@jadaktech.com
+            <Hyperlink RequestNavigate="Hyperlink_RequestNavigate" Tag="aaa"><!--NavigateUri="mailto:RFID-Support@jadaktech.com"-->
+                <!--RFID-Support@jadaktech.com-->
+                https://www.fuwit.com
             </Hyperlink>
             for assistance.
         </TextBlock>

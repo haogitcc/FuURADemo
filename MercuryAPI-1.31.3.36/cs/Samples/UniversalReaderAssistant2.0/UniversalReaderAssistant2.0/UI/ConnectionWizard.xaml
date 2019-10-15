@@ -76,7 +76,8 @@
                             <TextBlock FontWeight="DemiBold" TextWrapping="Wrap" Text="{Binding StatusWarningText}" Foreground="{Binding StatusWarningColor}" VerticalAlignment="Center" Margin="5"/>
                         </DockPanel>
                         <Border Background="#FFE2E2E2" BorderBrush="#FFAAAAAA" BorderThickness="1" Grid.Row="1" VerticalAlignment="Bottom">
-                            <Label FontSize="10" Content="Copyright © 2019 JADAK, a business unit of Novanta Corporation. All Rights Reserved." DockPanel.Dock="Right" HorizontalContentAlignment="Center"></Label>
+                            <Label FontSize="10" Content="深圳市铨顺宏科技有限公司 版权所有 备案号：粤ICP备13059692" DockPanel.Dock="Right" HorizontalContentAlignment="Center"></Label>
+                            <!--<Label FontSize="10" Content="Copyright © 2019 JADAK, a business unit of Novanta Corporation. All Rights Reserved." DockPanel.Dock="Right" HorizontalContentAlignment="Center"></Label>-->
                         </Border>
                     </StackPanel>
                 </DockPanel>

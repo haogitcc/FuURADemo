@@ -171,7 +171,8 @@
                 <TextBlock Height="20" Name="lblWarning" FontSize="12" TextWrapping="Wrap" VerticalAlignment="Center"/>
             </StatusBarItem>
             <StatusBarItem Grid.Column="1" Margin="0">
-                <Label Content="Copyright © 2019 JADAK, a business unit of Novanta Corporation. All Rights Reserved." />
+                <!--<Label Content="Copyright © 2019 JADAK, a business unit of Novanta Corporation. All Rights Reserved." />-->
+                <Label Content="深圳市铨顺宏科技有限公司 版权所有 备案号：粤ICP备13059692"/>
             </StatusBarItem>
         </StatusBar>
         <!-- The bar of buttons docked along the right edge: -->

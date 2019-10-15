@@ -16,8 +16,9 @@
             The module has reached maximum operating temperature. RF operations will stop temporarily until the temperature falls below the limit, resulting in degraded
             performance. Steps should be taken to avoid reaching over-temperature conditions. Decreasing duty-cycle, reducing power or adding thermal management
             hardware are options. Please see the module's Hardware Guide for more details or contact
-            <Hyperlink NavigateUri="mailto:RFID-Support@jadaktech.com" RequestNavigate="Hyperlink_RequestNavigate" Tag="aaa">
-                RFID-Support@jadaktech.com
+            <Hyperlink  RequestNavigate="Hyperlink_RequestNavigate" Tag="aaa"><!--NavigateUri="mailto:RFID-Support@jadaktech.com"-->
+                <!--RFID-Support@jadaktech.com-->
+                www.fuwit.com
             </Hyperlink>
             for assistance.
         </TextBlock>

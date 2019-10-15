@@ -1892,8 +1892,10 @@ namespace ThingMagic.URA2
         private void image1_MouseDown(object sender, MouseButtonEventArgs e)
         {
             ToolTip forWebsite = new ToolTip();
-            forWebsite.Content = "www.jadaktech.com";
-            System.Diagnostics.Process.Start("https://www.jadaktech.com");
+            //forWebsite.Content = "www.jadaktech.com";
+            //System.Diagnostics.Process.Start("https://www.jadaktech.com");
+            forWebsite.Content = "www.fuwit.com";
+            System.Diagnostics.Process.Start("https://www.fuwit.com");
         }
 
         /// <summary>

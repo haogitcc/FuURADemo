@@ -184,6 +184,10 @@
     <Compile Include="ViewModel\MainViewModel.cs" />
     <Compile Include="ViewModel\TagResultsViewModel.cs" />
     <Compile Include="ViewModel\ViewModelLocator.cs" />
+    <Page Include="Language\default.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
     <Page Include="Stylesheet\Themes.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
