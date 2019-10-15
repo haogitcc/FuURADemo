@@ -9215,7 +9215,28 @@ namespace ThingMagic.URA2
             //Console.WriteLine("tiSensorTags_GotFocus ...");
             List<int> antlist = GetSelectedAntennaList();
             SensorTags.LoadSensorTagsMemory(objReader, model, antlist);
-            tiSensorTags.Focus();
+
+            if (lblshowStatus.Content.ToString() == "Reading")
+            {
+                tiTagResults.Focus();
+                return;
+            }
+            if (!IsGen2ProtocolChecked(false))
+            {
+                return;
+            }
+            
+            btnRead.IsEnabled = false;
+            //Disable clear tag results button on tool-bar when tabs other then Tag Results is clicked
+            btnClearTagReads.IsEnabled = false;
+            saveData.IsEnabled = false;
+            gen2CheckBox.IsEnabled = false;
+            iso6bCheckBox.IsEnabled = false;
+            ipx64CheckBox.IsEnabled = false;
+            ipx256CheckBox.IsEnabled = false;
+            ataCheckBox.IsEnabled = false;
+            isoUcodeCheckbox.IsEnabled = false;
+            TagResults.dgTagResults.UnselectAll();
 
         }
 

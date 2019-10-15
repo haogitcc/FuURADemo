@@ -16,6 +16,7 @@ namespace ThingMagic.URA2.UI.UserControls
     /// </summary>
     public partial class ucSensorTags : UserControl
     {
+        String Tags = "ucSensorTags ";
         Reader objReader;
         uint startAddress = 0;
         string model = string.Empty;
@@ -27,13 +28,6 @@ namespace ThingMagic.URA2.UI.UserControls
         public bool chkEnableTagAging = false;
         public bool enableTagAgingOnRead = false;
 
-        TagReadRecordBindingList _tagList = new TagReadRecordBindingList();
-
-        public TagReadRecordBindingList TagList
-        {
-            get { return _tagList; }
-            set { _tagList = value; }
-        }
         public ucSensorTags()
         {
             Console.WriteLine("### init ucSensorTags");
@@ -54,11 +48,12 @@ namespace ThingMagic.URA2.UI.UserControls
             model_id_combo.SelectedIndex = 0;
 
             GenerateColmnsForDataGrid();
-            this.DataContext = TagList;
+            this.DataContext = tagdb.TagList;
         }
 
         public void LoadSensorTagsMemory(Reader reader, string readerModel, List<int> antlist)
         {
+            Console.WriteLine(Tags + "### LoadSensorTagsMemory --> " + tagdb.TotalTagCount);
             objReader = reader;
             model = readerModel;
             antennaList = antlist;
@@ -69,6 +64,7 @@ namespace ThingMagic.URA2.UI.UserControls
         /// </summary>
         public void GenerateColmnsForDataGrid()
         {
+            Console.WriteLine(Tags + "### GenerateColmnsForDataGrid");
             temp_dgTagResults.AutoGenerateColumns = false;
             serialNoColumn.Binding = new Binding("SerialNumber");
             serialNoColumn.Header = "#";
@@ -87,6 +83,7 @@ namespace ThingMagic.URA2.UI.UserControls
             TemperatureColumn.Width = new DataGridLength(1, DataGridLengthUnitType.Auto);
 
             temp_dgTagResults.ItemsSource = tagdb.TagList;
+            Console.WriteLine(Tags + "### GenerateColmnsForDataGrid done");
         }
 
         #region EventHandler
@@ -320,60 +317,24 @@ namespace ThingMagic.URA2.UI.UserControls
         }
         private void PrintTagreads(Object sender, TagReadDataEventArgs e)
         {
-            //Console.WriteLine("EPC[" + e.TagReadData.EpcString + "]");
-
-            //计算Delta2 
-            
-            if (e.TagReadData.Data.Length > 0)
+            //Console.WriteLine(Tags + " ### EPC[" + e.TagReadData.EpcString + "]");
+            Dispatcher.BeginInvoke(new ThreadStart(delegate ()
             {
-                //int delta1 = 0;
-                //double delta2 = 0;
-                //Console.WriteLine(ByteFormat.ToHex(tr.Data, "", " "));
+                tagdb.IsTagdbSensortags = true;
+                tagdb.Add(e.TagReadData);
+            }));
 
-                //delta1 = byteArrayToInt(tr.Data, 0);
-                //delta2 = delta1 / 100d - 101d;
-                //Console.WriteLine("d1=" + delta1 + ", d2=" + delta2);
+            Dispatcher.BeginInvoke(new ThreadStart(delegate ()
+            {
+                tagdb.Repaint();
+            }));
 
-                ////2A54 0000 0000 0000 F70B F045
-                //byte[] bepc = tr.Tag.EpcBytes;
-                //byte[] s06 = new byte[] { bepc[8], bepc[9] };
-                //byte[] s07 = new byte[] { bepc[10], bepc[11] };
-                //Console.WriteLine("s06=" + ByteFormat.ToHex(s06, "", ""));
-                //Console.WriteLine("s07=" + ByteFormat.ToHex(s07, "", ""));
-
-                //string s_SEN_DATA = ByteFormat.ToHex(s06, "", "").Substring(1) + ByteFormat.ToHex(s07, "", "").Substring(1);
-                //Console.WriteLine("s_SEN_DATA=" + s_SEN_DATA);
-
-                ////int i_SEN_DATA = int.Parse(s_SEN_DATA, System.Globalization.NumberStyles.HexNumber);
-                //int i_SEN_DATA = Convert.ToInt32(s_SEN_DATA, 16);
-                //Console.WriteLine("i_SEN_DATA=" + i_SEN_DATA);
-
-                //double D1 = (i_SEN_DATA & 0x00F80000) >> 19;
-                //double D2 = ((i_SEN_DATA & 0x0007FFF8) >> 3) & 0x0000FFFF;
-                //Console.WriteLine("D1=" + D1 + ", D2=" + D2);
-                //Console.WriteLine(11984.47 + ":" + (21.25 + D1 + D2 / 2752 + delta2));
-                //double temperature = 11984.47 / (21.25 + D1 + (D2 / 2752) + delta2) - 301.57;
-                //Console.WriteLine("temperature=" + temperature);
-                //Console.WriteLine();
-
-                Dispatcher.BeginInvoke(new ThreadStart(delegate ()
-                {
-                    tagdb.IsTagdbSensortags = true;
-                    tagdb.Add(e.TagReadData);
-                }));
-
-                Dispatcher.BeginInvoke(new ThreadStart(delegate ()
-                {
-                    tagdb.Repaint();
-                }));
-
-                Dispatcher.BeginInvoke(new ThreadStart(delegate ()
-                {
-                    total_sensortags_read_count.Content = tagdb.TotalTagCount.ToString();
-                    unique_sensortags_count.Content = tagdb.UniqueTagCount.ToString();
-                }
-                ));
+            Dispatcher.BeginInvoke(new ThreadStart(delegate ()
+            {
+                total_sensortags_read_count.Content = tagdb.TotalTagCount.ToString();
+                unique_sensortags_count.Content = tagdb.UniqueTagCount.ToString();
             }
+            ));
         }
 
         private static int byteArrayToInt(byte[] data, int offset)
@@ -390,7 +351,14 @@ namespace ThingMagic.URA2.UI.UserControls
 
         internal void ResetSensorTagsTab()
         {
-            Console.WriteLine("*** ResetSensorTagsTab");
+            Console.WriteLine(Tags + "### ResetSensorTagsTab");
+            if(temp_read_button.Content.Equals("Stop"))
+            {
+                temp_read_button.Content = "Read";
+                objReader.StopReading();
+                objReader.TagRead -= PrintTagreads;
+                objReader.ReadException -= new EventHandler<ReaderExceptionEventArgs>(r_ReadException);
+            }
         }
 
         private void Temp_clear_button_Click(object sender, RoutedEventArgs e)
@@ -399,6 +367,11 @@ namespace ThingMagic.URA2.UI.UserControls
             {
                 tagdb.Clear();
                 tagdb.Repaint();
+            }));
+            Dispatcher.Invoke(new ThreadStart(delegate ()
+            {
+                unique_sensortags_count.Content = "0";
+                total_sensortags_read_count.Content = "0";
             }));
         }
     }
