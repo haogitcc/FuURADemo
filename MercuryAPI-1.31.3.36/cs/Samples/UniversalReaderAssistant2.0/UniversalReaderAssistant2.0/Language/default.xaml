@@ -2,5 +2,175 @@
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
                     xmlns:local="clr-namespace:ThingMagic.URA2.Language"
                     xmlns:sys="clr-namespace:System;assembly=mscorlib">
-    <sys:String x:Key="Key">Value</sys:String>
+    <!--stackPanel13-->
+    <sys:String x:Key="Reader :">Reader :</sys:String>
+    <!--<sys:String x:Key="Connect">Connect</sys:String>
+    <sys:String x:Key="Disconnect">Disconnect</sys:String>-->
+    <sys:String x:Key="Read">Read</sys:String>
+    <sys:String x:Key="Stop Reading">Stop Reading</sys:String>
+    <!--<sys:String x:Key="Refresh">Refresh</sys:String>-->
+
+    <sys:String x:Key="Disconnected">Disconnected</sys:String>
+    <sys:String x:Key="Connecting..">Connecting..</sys:String>
+    <sys:String x:Key="Connected">Connected</sys:String>
+    <sys:String x:Key="Reading">Reading</sys:String>
+    <sys:String x:Key="Stopped">Stopped</sys:String>
+    
+    <sys:String x:Key="tittle Settings/Status">Settings/Status</sys:String>
+    <sys:String x:Key="tittle Connect">Connect</sys:String>
+    <sys:String x:Key="tittle2 Connect">Connect</sys:String>
+    <sys:String x:Key="Reader Type :">Reader Type :</sys:String>
+    <sys:String x:Key="Serial">Serial</sys:String>
+    <sys:String x:Key="Network">Network</sys:String>
+    <sys:String x:Key="Custom Transport">Custom Transport</sys:String>
+    <sys:String x:Key="Reader Name :">Reader Name :</sys:String>
+    <sys:String x:Key="Transport Logs">Transport Logs</sys:String>
+    <sys:String x:Key="btn Refresh">Refresh</sys:String>
+    <sys:String x:Key="btn Web UI">Web UI</sys:String>
+    <sys:String x:Key="btn Connect">Connect</sys:String>
+    <sys:String x:Key="btn Disconnect">Disconnect</sys:String>
+    <sys:String x:Key="Region :">Region :</sys:String>
+    <sys:String x:Key="Baud Rate :">Baud Rate:</sys:String>
+    <sys:String x:Key="btn Load">Load</sys:String>
+    <sys:String x:Key="btn Save">Save</sys:String>
+    <sys:String x:Key="header Load/Save Profile">Load/Save Profile</sys:String>
+
+    <sys:String x:Key="tittle Read/Write Options">Read/Write Options</sys:String>
+    <sys:String x:Key="header Antennas">Antennas</sys:String>
+    <sys:String x:Key="header Switching Method">Switching Method</sys:String>
+    <sys:String x:Key="Equal Time">Equal Time</sys:String>
+    <sys:String x:Key="Dynamic">Dynamic</sys:String>
+    <sys:String x:Key="Antenna Detection">Antenna Detection</sys:String>
+    <sys:String x:Key="Antenna Multiplexing">Antenna Multiplexing</sys:String>
+    <!--<sys:String x:Key="Input">Input</sys:String>
+    <sys:String x:Key="Output">Output</sys:String>
+    <sys:String x:Key="Low">Low</sys:String>
+    <sys:String x:Key="High">High</sys:String>-->
+    <sys:String x:Key="header GPIO Configuration">GPIO Configuration</sys:String>
+    <!--<sys:String x:Key="GPIO Pins">GPIO Pins</sys:String>
+    <sys:String x:Key="Behaviour">Behaviour</sys:String>
+    <sys:String x:Key="Logic Level">Logic Level</sys:String>-->
+    <sys:String x:Key="header Read Behaviour">Read Behaviour</sys:String>
+    <sys:String x:Key="Read Continuously">Continuously</sys:String>
+    <!--<sys:String x:Key="RF On (ms)">RF On (ms)</sys:String>
+    <sys:String x:Key="RF Off (ms)">RF Off (ms)</sys:String>-->
+    <sys:String x:Key="Read Once">Read Once</sys:String>
+    <!--<sys:String x:Key="Timeout (ms)">Timeout (ms)</sys:String>
+    <sys:String x:Key="Read Stop Trigger">Read Stop Trigger</sys:String>
+    <sys:String x:Key="Fast Search">Fast Search</sys:String>-->
+    <sys:String x:Key="Protocols">Protocols</sys:String>
+    <!--<sys:String x:Key="Gen2">Gen2</sys:String>
+    <sys:String x:Key="ISO18000-6B">ISO18000-6B</sys:String>
+    <sys:String x:Key="ISO18000-6B-UCode">ISO18000-6B-UCode</sys:String>
+    <sys:String x:Key="IPX64">IPX64</sys:String>
+    <sys:String x:Key="IPX256">IPX256</sys:String>
+    <sys:String x:Key="ATA">ATA</sys:String>-->
+    <sys:String x:Key="Embedded ReadData">Embedded ReadData</sys:String>
+    <!--<sys:String x:Key="Enable">Enable</sys:String>
+    <sys:String x:Key="MemBank">MemBank</sys:String>
+    <sys:String x:Key="TID">TID</sys:String>
+    <sys:String x:Key="Reserved">Reserved</sys:String>
+    <sys:String x:Key="EPC">EPC</sys:String>
+    <sys:String x:Key="User">User</sys:String>
+    <sys:String x:Key="Start">Start</sys:String>
+    <sys:String x:Key="Length">Length</sys:String>
+    <sys:String x:Key="UniqueByData">UniqueByData</sys:String>
+    <sys:String x:Key="Show Failed Data Reads">Show Failed Data Reads</sys:String>-->
+    <sys:String x:Key="Filter">Filter</sys:String>
+    <!--<sys:String x:Key="Apply Filter1">Apply Filter1</sys:String>
+    <sys:String x:Key="Apply Filter2">Apply Filter2</sys:String>
+    <sys:String x:Key="Apply Filter3">Apply Filter3</sys:String>-->
+    
+    <sys:String x:Key="tittle Performance Tuning">Performance Tuning</sys:String>
+    <sys:String x:Key="header Reader Power Settings">Reader Power Settings</sys:String>
+    <sys:String x:Key="RF Power Settings :">RF Power Settings :</sys:String>
+    <sys:String x:Key="Global">Global</sys:String>
+    <sys:String x:Key="Per Port">Per Port</sys:String>
+    <sys:String x:Key="Read Power">Read Power</sys:String>
+    <sys:String x:Key="Write Power">Write Power</sys:String>
+    <!--<sys:String x:Key="dBm">dBm</sys:String>-->
+    <sys:String x:Key="headerr Gen2 Performance Tuning">Gen2 Performance Tuning</sys:String>
+    <sys:String x:Key="Tag population size">Tag population size</sys:String>
+    <sys:String x:Key="Automatically adjust as population changes">Automatically adjust as population changes</sys:String>
+    <sys:String x:Key="Optimize for estimated number of tags in field:">Optimize for estimated number of tags in field:</sys:String>
+    <sys:String x:Key="Tags">Tags</sys:String>
+    <sys:String x:Key="Read Distance vs. Read Rate">Read Distance vs. Read Rate</sys:String>
+    <sys:String x:Key="Maximize Tag read distance">Maximize Tag read distance</sys:String>
+    <sys:String x:Key="Maximize tag read rate">Maximize tag read rate</sys:String>
+    <sys:String x:Key="Tag Response Rate">Tag Response Rate</sys:String>
+    <sys:String x:Key="Select best choice for population size">Select best choice for population size</sys:String>
+    <sys:String x:Key="Customize tag response rate">Customize tag response rate</sys:String>
+    <sys:String x:Key="Tags respond less often">Tags respond less often</sys:String>
+    <sys:String x:Key="Tags respond more often">Tags respond more often</sys:String>
+    <sys:String x:Key="btn Display Gen2 Settings">Display Gen2 Settings</sys:String>
+    <sys:String x:Key="Configure Gen2 Settings">Configure Gen2 Settings</sys:String>
+    <sys:String x:Key="Applying Gen2 Settings">Applying Gen2 Settings</sys:String>
+
+    <sys:String x:Key="tittle Performance Metrics">Performance Metrics</sys:String>
+    <sys:String x:Key="label Unique Tag Count">Unique Tag Count</sys:String>
+    <sys:String x:Key="label Total Tag Count">Total Tag Count</sys:String>
+    <sys:String x:Key="label in">in</sys:String>
+    <sys:String x:Key="label Sec">Sec</sys:String>
+    <sys:String x:Key="label Read Rate/Sec">Read Rate/Sec</sys:String>
+    
+    <sys:String x:Key="tittle Display Options">Display Options</sys:String>
+    <sys:String x:Key="Font Size :">Font Size :</sys:String>
+    <sys:String x:Key="Tag Aging :">Tag Aging :</sys:String>
+    <sys:String x:Key="Refresh Rate (ms) :">Refresh Rate (ms) :</sys:String>
+    <sys:String x:Key="Tag Result Column :">Tag Result Column :</sys:String>
+    <sys:String x:Key="TimeStamp Format :">TimeStamp Format :</sys:String>
+    <sys:String x:Key="Big Num Selection :">Big Num Selection :</sys:String>
+    <!--<sys:String x:Key="Remove Big Num">Remove Big Num</sys:String>
+    <sys:String x:Key="Unique Tag Count">Unique Tag Count</sys:String>
+    <sys:String x:Key="Total Tag Count">Total Tag Count</sys:String>
+    <sys:String x:Key="Summary of Tag Result">Summary of Tag Result</sys:String>-->
+    <sys:String x:Key="EPC Format :">EPC Format :</sys:String>
+    <sys:String x:Key="Embedded Read Data Format :">Embedded Read Data Format :</sys:String>
+    
+    
+    <sys:String x:Key="tittle Status/Version Info">Status/Version Info</sys:String>
+    <sys:String x:Key="RFID Engine :">RFID Engine : </sys:String>
+    <sys:String x:Key="COM/IP :">COM/IP : </sys:String>
+    <sys:String x:Key="Firmware Version :">Firmware Version : </sys:String>
+    <sys:String x:Key="Hardware Version :">Hardware Version : </sys:String>
+    <sys:String x:Key="Serial Number :">Serial Number : </sys:String>
+    <sys:String x:Key="URA Version :">URA Version : </sys:String>
+    <sys:String x:Key="Mercury API Version :">Mercury API Version : </sys:String>
+    
+    <sys:String x:Key="tittle Regulatory Testing">Regulatory Testing</sys:String>
+    <sys:String x:Key="tittle Firmware/License Update">Firmware/License Update</sys:String>
+    <sys:String x:Key="tittle Data Extensions">Data Extensions</sys:String>
+
+ 
+    <!--群写-->
+    <sys:String x:Key="EPC :">EPC :</sys:String>
+    <sys:String x:Key="Start Num :">Start Num :</sys:String>
+    <sys:String x:Key="GenerateEPC">GenerateEPC</sys:String>
+    <sys:String x:Key="Write">Batch Write</sys:String>
+    <sys:String x:Key="StopWriting">StopWriting</sys:String>
+    <sys:String x:Key="IsFixed">IsFixed</sys:String>
+
+    <sys:String x:Key="Start GPI">Start GPI</sys:String>
+    
+    <sys:String x:Key="tabHeader Tag Results">Tag Results</sys:String>
+    <sys:String x:Key="tabHeader Tag Inspector">Tag Inspector</sys:String>
+    <sys:String x:Key="tabHeader Write EPC">Write EPC</sys:String>
+    <sys:String x:Key="tabHeader User Memory">User Memory</sys:String>
+    <sys:String x:Key="tabHeader Lock Tag">Lock Tag</sys:String>
+    <sys:String x:Key="tabHeader Untraceable">Untraceable</sys:String>
+    <sys:String x:Key="tabHeader Authenticate">Authenticate</sys:String>
+    <sys:String x:Key="tabHeader Sensor Tags">Sensor Tags</sys:String>
+
+    <sys:String x:Key="WEB SITE">www.jadaktech.com</sys:String>
+    <sys:String x:Key="WEB SITE ADDR">https://www.jadaktech.com</sys:String>
+    <sys:String x:Key="copyright">Copyright © 2019 JADAK, a business unit of Novanta Corporation. All Rights Reserved.</sys:String>
+    <sys:String x:Key="Universal Reader Assistant ">Universal Reader Assistant </sys:String>
+    <sys:String x:Key="Default IP">192.168.8.166:8086</sys:String>
+    
+    <sys:String x:Key="Perform read based on the read behavior defined  by the settings in the Read Options sidebar.">Perform read based on the read behavior defined  by the settings in the Read Options sidebar.</sys:String>
+    <sys:String x:Key="Please make sure to provide additional DC power source to the reader">Please make sure to provide additional DC power source to the reader</sys:String>
+    <sys:String x:Key="Over Temperature">Over Temperature</sys:String>
+    <sys:String x:Key="High Return Loss">High Return Loss</sys:String>
+    <sys:String x:Key="Channel Occupied">Channel Occupied</sys:String>
+    <sys:String x:Key="warning">warning</sys:String>
 </ResourceDictionary>

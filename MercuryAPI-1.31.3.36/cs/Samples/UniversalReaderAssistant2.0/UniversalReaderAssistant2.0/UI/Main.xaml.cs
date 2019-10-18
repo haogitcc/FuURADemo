@@ -296,7 +296,7 @@ namespace ThingMagic.URA2
             try
             {
                 string[] titleVer = (this.GetType().Assembly.GetName().Version.ToString()).Split('.').ToArray();
-                Title = "Universal Reader Assistant " + titleVer[0] + "." + titleVer[1];
+                Title = FindResource("Universal Reader Assistant ").ToString() + titleVer[0] + "." + titleVer[1];
                 App.Current.MainWindow = this;
                 // Ending the session when Application abruptly shuts down implicitly or explicitly
                 SystemEvents.SessionEnding += (o, e) =>
@@ -663,7 +663,7 @@ namespace ThingMagic.URA2
                                 MessageBox.Show(ex.Message + ". Disconnecting the reader.", "Error : Universal Reader Assistant", MessageBoxButton.OK, MessageBoxImage.Error);
                                 disconnectReader = true;
                             }
-                            if (!btnConnect.Content.ToString().Equals("Connect") && disconnectReader)
+                            if (!btnConnect.Content.ToString().Equals(FindResource("btn Connect").ToString()) && disconnectReader)
                             {
                                 DisconnectReader();
                             }
@@ -810,16 +810,16 @@ namespace ThingMagic.URA2
                 switch (((ReaderCodeException)e.ReaderException).Code)
                 {
                     case 0x504:
-                        warningText = "Over Temperature";
+                        warningText = FindResource("Over Temperature").ToString();
                         break;
                     case 0x505:
-                        warningText = "High Return Loss";
+                        warningText = FindResource("High Return Loss").ToString();
                         break;
                     case 0x501:
-                        warningText = "Channel Occupied";
+                        warningText = FindResource("Channel Occupied").ToString();
                         break;
                     default:
-                        warningText = "warning";
+                        warningText = FindResource("warning").ToString();
                         break;
 
                 }
@@ -828,7 +828,7 @@ namespace ThingMagic.URA2
                 // customers simply think it slow performance.
                 if ((model.Equals("M6e Micro") || model.Equals("M6e Nano") || model.Equals("M6e Micro USB") || model.Equals("M6e Micro USBPro")))
                 {
-                    if (warningText == "Over Temperature")
+                    if (warningText == FindResource("Over Temperature").ToString())
                     {
                         Dispatcher.BeginInvoke(new ThreadStart(delegate()
                         {
@@ -852,7 +852,7 @@ namespace ThingMagic.URA2
                         }));
 
                     }
-                    if ((warningText == "Channel Occupied"))
+                    if ((warningText == FindResource("Channel Occupied").ToString()))
                     {
                         Dispatcher.BeginInvoke(new ThreadStart(delegate()
                         {
@@ -916,7 +916,7 @@ namespace ThingMagic.URA2
                 {
                     btnConnect.Dispatcher.BeginInvoke(new ThreadStart(delegate()
                     {
-                        btnConnect.Content = "Disconnect";
+                        btnConnect.Content = FindResource("btn Disconnect").ToString();
                         EnableDisableSyncReadOptions(true);
                         btnConnect_Click(sender, new RoutedEventArgs());
                     }));
@@ -931,7 +931,7 @@ namespace ThingMagic.URA2
                         btnConnect.Dispatcher.BeginInvoke(new ThreadStart(delegate()
                         {
                             Mouse.SetCursor(Cursors.AppStarting);
-                            btnConnect.Content = "Disconnect";
+                            btnConnect.Content = FindResource("btn Disconnect").ToString();
                             btnConnect_Click(sender, new RoutedEventArgs());
                             // Remove any older status messages if exists
                             DisplayMessageOnStatusBar(e.ReaderException.Message, Brushes.Red);
@@ -1023,11 +1023,11 @@ namespace ThingMagic.URA2
             readRatePerSec.Stop();
             btnConnect.Dispatcher.BeginInvoke(new ThreadStart(delegate()
             {
-                if (!lblshowStatus.Content.ToString().Contains("Disconnected"))
+                if (!lblshowStatus.Content.ToString().Contains(FindResource("Disconnected").ToString()))
                 {
                     isAsyncReadGoingOn = false;
-                    btnConnect.Content = "Disconnect";
-                    btnRead.Content = "Read";
+                    btnConnect.Content = FindResource("btn Disconnect").ToString();
+                    btnRead.Content = FindResource("Read").ToString();
                     btnRead.ToolTip = "Start Async Read";
                     rdBtnReadOnce.IsEnabled = true;
                     AntennasGroupBox.IsEnabled = true;
@@ -1068,7 +1068,7 @@ namespace ThingMagic.URA2
                             // Enable the read/stop-reading button when URA is able to connect to the reader.
                             btnRead.IsEnabled = true;
                             GUIturnoffWarning();
-                            btnRead.Content = "Read";
+                            btnRead.Content = FindResource("Read").ToString();
                             AntennasGroupBox.IsEnabled = true;
                             grpGPIOBehaviour.IsEnabled = true;
                             ProtocolsGroupBox.IsEnabled = true;
@@ -1093,8 +1093,8 @@ namespace ThingMagic.URA2
                     btnConnect.Dispatcher.BeginInvoke(new ThreadStart(delegate()
                     {
                         isReconnectFailed = true;
-                        btnRead.Content = "Stop Reading";
-                        btnConnect.Content = "Disconnect";
+                        btnRead.Content = FindResource("Stop Reading").ToString();
+                        btnConnect.Content = FindResource("btn Disconnect").ToString();
                         btnConnect_Click(sender, e);
                         if (objReader != null)
                         {
@@ -1588,7 +1588,7 @@ namespace ThingMagic.URA2
                 SaveConfigurationForWizardFlow();
                 tmrLogStopReader();
                 // Don't go for tear down if the URA is not connected to any reader/module
-                if ((null != objReader) && (lblshowStatus.Content.ToString() == "Connected"))
+                if ((null != objReader) && (lblshowStatus.Content.ToString() == FindResource("Connected").ToString()))
                 {
                     if (objReader is SerialReader)
                     {
@@ -1894,8 +1894,8 @@ namespace ThingMagic.URA2
             ToolTip forWebsite = new ToolTip();
             //forWebsite.Content = "www.jadaktech.com";
             //System.Diagnostics.Process.Start("https://www.jadaktech.com");
-            forWebsite.Content = "www.fuwit.com";
-            System.Diagnostics.Process.Start("https://www.fuwit.com");
+            forWebsite.Content = FindResource("WEB SITE").ToString();
+            System.Diagnostics.Process.Start(FindResource("WEB SITE ADDR").ToString());
         }
 
         /// <summary>
@@ -2146,9 +2146,9 @@ namespace ThingMagic.URA2
         /// <param name="e"></param>
         private void btnConnectExpander_Click(object sender, RoutedEventArgs e)
         {
-            if (btnConnectExpander.Content.ToString().Contains("Disconnect"))
+            if (btnConnectExpander.Content.ToString().Contains(FindResource("btn Disconnect").ToString()))
             {
-                if (btnRead.Content.ToString().Contains("Stop Reading"))
+                if (btnRead.Content.ToString().Contains(FindResource("Stop Reading").ToString()))
                 {
                     string msg = "Read is in progress , Do you want to stop the reading and disconnect the reader?";
                     switch (MessageBox.Show(msg, "Universal Reader Assistant Message", MessageBoxButton.OKCancel, MessageBoxImage.Question))
@@ -2187,7 +2187,7 @@ namespace ThingMagic.URA2
                 //}
                 if (expdrConnect.IsExpanded)
                 {
-                    if (btnConnect.Content.ToString().Equals("Connect"))
+                    if (btnConnect.Content.ToString().Equals(FindResource("btn Connect").ToString()))
                     {
                         btnConnectExpander.Content = btnConnect.Content.ToString();
                     }
@@ -2302,7 +2302,7 @@ namespace ThingMagic.URA2
                     SaveFileDialog saveFileDialog1 = new SaveFileDialog();
                     saveFileDialog1.Filter = "CSV Files (*.csv)|*.csv";
                     string tabHeader = ((TextBlock)((TabItem)tcTagResults.SelectedItem).Header).Text;
-                    if (tabHeader.Equals("Tag Results"))
+                    if (tabHeader.Equals(FindResource("tabHeader Tag Results").ToString()))
                     {
                         strDestinationFile = "UniversalReader_tagResults"
                             + DateTime.Now.ToString("yyyy-MM-dd-HH-mm-ss") + @".csv";
@@ -2387,7 +2387,7 @@ namespace ThingMagic.URA2
                             tw.Close();
                         }
                     }
-                    else if (tabHeader.Equals("Tag Inspector"))
+                    else if (tabHeader.Equals(FindResource("tabHeader Tag Inspector").ToString()))
                     {
                         saveFileDialog1.Filter = "CSV Files (*.csv)|*.csv";
                         strDestinationFile = "UniversalReader_TagInspection_Results"
@@ -2498,7 +2498,7 @@ namespace ThingMagic.URA2
         {
             try
             {
-                if (btnConnect.Content.ToString() == "Connect")
+                if (btnConnect.Content.ToString() == FindResource("btn Connect").ToString())
                 {
                     if ((bool)rdbtnNetworkConnection.IsChecked)
                     {
@@ -2615,7 +2615,7 @@ namespace ThingMagic.URA2
                         tbconnect.IsSelected = true;
                         SaveConfigurationForWizardFlow();
                         tmrLogStopReader();
-                        if (btnRead.Content.ToString() == "Stop Reading")
+                        if (btnRead.Content.ToString() == FindResource("Stop Reading").ToString())
                         {
                             startRead_Click(sender, e);
                         }
@@ -2667,7 +2667,7 @@ namespace ThingMagic.URA2
                         dispatchtimer.Stop();
                         readRatePerSec.Stop();
                         //btnConnect.ToolTip = "Connect";
-                        btnConnect.Content = "Connect";
+                        btnConnect.Content = FindResource("btn Connect").ToString();
                         ConfigureAntennaBoxes(null);
                         ConfigureLogicalAntennaBoxes(null);
                         ConfigureProtocols(null);
@@ -2695,7 +2695,7 @@ namespace ThingMagic.URA2
 
                         // Enable fast search
                         chkEnableFastSearch.IsEnabled = true;
-                        lblshowStatus.Content = "Disconnected";
+                        lblshowStatus.Content = FindResource("Disconnected").ToString();
                         InitializeRdrDiagnostics();
 
                         // Enable firmware Update panel
@@ -2945,7 +2945,7 @@ namespace ThingMagic.URA2
                     SetBaudRate();
                 }
                 //Show the status
-                lblshowStatus.Content = "Connecting..";
+                lblshowStatus.Content = FindResource("Connecting..").ToString();
                 Mouse.SetCursor(Cursors.AppStarting);
                 objReader.Connect();
                 // Enable all the expander controls
@@ -3022,7 +3022,7 @@ namespace ThingMagic.URA2
                 }
 
                 //Show the status
-                lblshowStatus.Content = "Connected";
+                lblshowStatus.Content = FindResource("Connected").ToString();
 
                 imgReaderStatus.Source = new BitmapImage(new Uri(@"..\Icons\LedOrange.png", UriKind.RelativeOrAbsolute));
                 if ((bool)rdbtnLocalConnection.IsChecked)
@@ -3212,7 +3212,7 @@ namespace ThingMagic.URA2
                 supportedProtocols = (TagProtocol[])objReader.ParamGet("/reader/version/supportedProtocols");
                 ConfigureProtocols(supportedProtocols);
                 //btnConnect.ToolTip = "Disconnect";
-                btnConnect.Content = "Disconnect";
+                btnConnect.Content = FindResource("btn Disconnect").ToString();
                 btnConnectExpander.Content = btnConnect.Content;
 
                 //Enable save data, btnClearTagReads, read-once, readasyncread buttons
@@ -3253,7 +3253,7 @@ namespace ThingMagic.URA2
                 btnConnect.IsEnabled = true;
                 btnRead.Visibility = Visibility.Hidden;
                 initialReaderSettingsLoaded = true;
-                lblshowStatus.Content = "Disconnected";
+                lblshowStatus.Content = FindResource("Disconnected").ToString();
                 rdbtnLocalConnection.IsEnabled = rdbtnNetworkConnection.IsEnabled = rdbtnCustomTrasnportConnection.IsEnabled = true;
                 cmbFixedReaderAddr.IsEnabled = cmbReaderAddr.IsEnabled = txtCustomTransport.IsEnabled = true;
                 chkEnableTransportLogging.IsEnabled = true;
@@ -3524,7 +3524,7 @@ namespace ThingMagic.URA2
                         btnRefreshReadersList.Visibility = System.Windows.Visibility.Collapsed;
                     }
                     ToolTip networkRdrToolTip = new ToolTip();
-                    networkRdrToolTip.Content = "Enter reader IPaddress/Hostname";
+                    networkRdrToolTip.Content = FindResource("Enter reader IPaddress/Hostname").ToString();
                     cmbReaderAddr.ToolTip = networkRdrToolTip;
                     btnRefreshReadersList.ToolTip = "Refresh host name list";
                     InitializeReaderUriBox();
@@ -3568,7 +3568,7 @@ namespace ThingMagic.URA2
                     lblbaudRate.Visibility = System.Windows.Visibility.Visible;
                     cbxBaudRate.Visibility = System.Windows.Visibility.Visible;
                     ToolTip serialRdrToolTip = new ToolTip();
-                    serialRdrToolTip.Content = "Enter COM port or press Refresh to refresh comport list";
+                    serialRdrToolTip.Content = FindResource("Enter COM port or press Refresh to refresh comport list").ToString();
                     cmbReaderAddr.ToolTip = serialRdrToolTip;
                     btnRefreshReadersList.ToolTip = "Refresh Comport list";
                     InitializeReaderUriBox();
@@ -3870,7 +3870,7 @@ namespace ThingMagic.URA2
                             }
                             else
                             {
-                                if (btnConnect.Content.ToString() != "Connect")
+                                if (btnConnect.Content.ToString() != FindResource("btn Connect").ToString())
                                 {
                                     foreach (CheckBox cbx in protocolCheckBox)
                                     {
@@ -4649,7 +4649,7 @@ namespace ThingMagic.URA2
                             Dispatcher.BeginInvoke(new ThreadStart(delegate()
                             {
                                 isSyncReadGoingOn = true;
-                                lblshowStatus.Content = "Reading";
+                                lblshowStatus.Content = FindResource("Reading").ToString();
                                 imgReaderStatus.Source = new BitmapImage(new Uri(@"..\Icons\LedGreen.png",
                                     UriKind.RelativeOrAbsolute));
                                 if (clientConnected || isHttpPostServiceEnabled)
@@ -4693,7 +4693,7 @@ namespace ThingMagic.URA2
                                         2)).ToString();
 
                                     //Show the status
-                                    lblshowStatus.Content = "Connected";
+                                    lblshowStatus.Content = FindResource("Connected").ToString();
                                     imgReaderStatus.Source = new BitmapImage(new Uri(@"..\Icons\LedOrange.png",
                                         UriKind.RelativeOrAbsolute));
                                     broadcastOFF();
@@ -4718,7 +4718,7 @@ namespace ThingMagic.URA2
                                 isSyncReadGoingOn = false;
                                 TagResults.enableTagAgingOnRead = false;
                                 //Show the status
-                                lblshowStatus.Content = "Connected";
+                                lblshowStatus.Content = FindResource("Connected").ToString();
                                 imgReaderStatus.Source = new BitmapImage(new Uri(@"..\Icons\LedOrange.png",
                                     UriKind.RelativeOrAbsolute));
 
@@ -4733,13 +4733,13 @@ namespace ThingMagic.URA2
                                     switch (((ReaderCodeException)ex).Code)
                                     {
                                         case 0x504:
-                                            warningText = "Over Temperature";
+                                            warningText = FindResource("Over Temperature").ToString();
                                             break;
                                         case 0x505:
-                                            warningText = "High Return Loss";
+                                            warningText = FindResource("High Return Loss").ToString();
                                             break;
                                         default:
-                                            warningText = "warning";
+                                            warningText = FindResource("warning").ToString();
                                             break;
                                     }
                                     myTimer.Elapsed += new ElapsedEventHandler(TimeEvent);
@@ -4787,7 +4787,7 @@ namespace ThingMagic.URA2
                                     "Error", MessageBoxButton.OK, MessageBoxImage.Error);
                                 btnConnect.Dispatcher.BeginInvoke(new ThreadStart(delegate()
                                 {
-                                    btnConnect.Content = "Disconnect";
+                                    btnConnect.Content = FindResource("btn Disconnect").ToString();
                                     btnConnect_Click(sender, new RoutedEventArgs());
                                 }));
                             }
@@ -4812,7 +4812,7 @@ namespace ThingMagic.URA2
                 isSyncReadGoingOn = false;
                 TagResults.enableTagAgingOnRead = false;
                 //Show the status
-                lblshowStatus.Content = "Connected";
+                lblshowStatus.Content = FindResource("Connected").ToString();
                 imgReaderStatus.Source = new BitmapImage(new Uri(@"..\Icons\LedOrange.png", UriKind.RelativeOrAbsolute));
                 MessageBox.Show(ex.Message, "Reader Message", MessageBoxButton.OK, MessageBoxImage.Error);
             }
@@ -5239,7 +5239,7 @@ namespace ThingMagic.URA2
                 SetFontSize();
 
                 Mouse.SetCursor(Cursors.Wait);
-                if (btnRead.Content.ToString() == "Read")
+                if (btnRead.Content.ToString() == FindResource("Read").ToString())
                 {
                     btnRead.IsEnabled = false;
                     // Reset connection lost exception counter
@@ -5292,7 +5292,7 @@ namespace ThingMagic.URA2
                     }
 
                     btnRead.ToolTip = "Stop Async Read";
-                    btnRead.Content = "Stop Reading";
+                    btnRead.Content = FindResource("Stop Reading").ToString();
 
                     // Set RF off and on time 
                     objReader.ParamSet("/reader/read/asyncOnTime", int.Parse(txtRFOnTimeout.Text));
@@ -5335,7 +5335,7 @@ namespace ThingMagic.URA2
                     startAsyncReadTime = DateTime.Now;
 
                     // Display reading status
-                    lblshowStatus.Content = "Reading";
+                    lblshowStatus.Content = FindResource("Reading").ToString();
                     imgReaderStatus.Source = new BitmapImage(new Uri(@"..\Icons\LedGreen.png",
                         UriKind.RelativeOrAbsolute));
                     if (clientConnected)
@@ -5358,7 +5358,7 @@ namespace ThingMagic.URA2
                 }
 
                     // Call when stop reading button is pressed
-                else if (btnRead.Content.ToString() == "Stop Reading")
+                else if (btnRead.Content.ToString() == FindResource("Stop Reading").ToString())
                 {
                     btnRead.IsEnabled = false;
                     OnStopReadsClick();
@@ -5400,7 +5400,7 @@ namespace ThingMagic.URA2
                             {
                                 OnStartRead("");
                                 btnRead.ToolTip = "Start Async Read (EPC Only)";
-                                btnRead.Content = "Read";
+                                btnRead.Content = FindResource("Read").ToString();
                                 rdBtnReadOnce.IsEnabled = true;
                                 // Enable fast search
                                 chkEnableFastSearch.IsEnabled = true;
@@ -5501,12 +5501,12 @@ namespace ThingMagic.URA2
 
                 Mouse.SetCursor(Cursors.Arrow);
 
-                lblshowStatus.Content = "Stopped";
+                lblshowStatus.Content = FindResource("Stopped").ToString();
                 imgReaderStatus.Source = new BitmapImage(new Uri(@"..\Icons\LedOrange.png",
                     UriKind.RelativeOrAbsolute));
                 broadcastOFF();
                 btnRead.ToolTip = "Start Async Read";
-                btnRead.Content = "Read";
+                btnRead.Content = FindResource("Read").ToString();
 
                 // De register read exception and tag read and temperature listeners
                 objReader.TagRead -= PrintTagRead;
@@ -5826,10 +5826,10 @@ namespace ThingMagic.URA2
             {
                 if ((bool)rdBtnReadOnce.IsChecked)
                 {
-                    if (btnConnect.Content.ToString() != "Connect")
+                    if (btnConnect.Content.ToString() != FindResource("btn Connect").ToString())
                     {
                         //Show the status
-                        lblshowStatus.Content = "Connected";
+                        lblshowStatus.Content = FindResource("Connected").ToString();
                         btnClearReads_Click(sender, e);
                         lblReadOnce.Visibility = System.Windows.Visibility.Visible;
                         txtbxreadOnceTimeout.Visibility = System.Windows.Visibility.Visible;
@@ -5858,7 +5858,7 @@ namespace ThingMagic.URA2
             {
                 if ((bool)rdBtnReadContinuously.IsChecked)
                 {
-                    if (btnConnect.Content.ToString() != "Connect")
+                    if (btnConnect.Content.ToString() != FindResource("btn Connect").ToString())
                     {
                         btnClearReads_Click(sender, e);
                         lblReadOnce.Visibility = System.Windows.Visibility.Collapsed;
@@ -5919,7 +5919,7 @@ namespace ThingMagic.URA2
         /// <param name="e"></param>
         private void btnRead_Click(object sender, RoutedEventArgs e)
         {
-            if (btnRead.Content.ToString() == "Read")
+            if (btnRead.Content.ToString() == FindResource("Read").ToString())
             {
                 try
                 {
@@ -5989,7 +5989,7 @@ namespace ThingMagic.URA2
                 // If user selects multiple antennas with equal time switching API is not returning 
                 // single tag count per record. To achieve this disabling the deduplication in API
                 // in case of asynchronous read
-                if (btnRead.Content.ToString() == "Read" && M6eFamilyList.Contains(model))
+                if (btnRead.Content.ToString() == FindResource("Read").ToString() && M6eFamilyList.Contains(model))
                 {
                     objReader.ParamSet("/reader/tagReadData/enableReadFilter", false);
                 }
@@ -7761,7 +7761,7 @@ namespace ThingMagic.URA2
                         {
                             lblWarning.Dispatcher.BeginInvoke(new ThreadStart(delegate()
                             {
-                                warningText = "Please make sure to provide additional DC power source to the reader";
+                                warningText = FindResource("Please make sure to provide additional DC power source to the reader").ToString();
                                 DisplayMessageOnStatusBar(warningText, (SolidColorBrush)(new BrushConverter().ConvertFrom("#ff9400")));
                             }));
                         }
@@ -7840,18 +7840,18 @@ namespace ThingMagic.URA2
             {
                 // Create a FlowDocument to contain content for the RichTextBox.
                 FlowDocument myFlowDoc = new FlowDocument();
-                if (lblshowStatus.Content.ToString() == "Disconnected")
+                if (lblshowStatus.Content.ToString() == FindResource("Disconnected").ToString())
                 {
                     lblURAVersionContent.Content = this.GetType().Assembly.GetName().Version.ToString();
                     lblMercuryApiVersionContent.Content = Assembly.GetAssembly(typeof(ThingMagic.Reader)).GetName().Version.ToString();
                     lblRFIDEngine.Visibility = lblRFIDEngineContent.Visibility = lblFirmwareVersion.Visibility = lblFirmwareVersionContent.Visibility = lblHardwareVersion.Visibility = lblHardwareVersionContent.Visibility = lblSerialNumber.Visibility = lblSerialNumberContent.Visibility = lblRFIDIPCom.Visibility = lblRFIDIPComContent.Visibility = Visibility.Collapsed;
-                    myFlowDoc.Blocks.Add(new Paragraph(new Run("URA Version : " + lblURAVersionContent.Content.ToString())));
-                    myFlowDoc.Blocks.Add(new Paragraph(new Run("Mercury API Version : " + lblMercuryApiVersionContent.Content.ToString())));
+                    myFlowDoc.Blocks.Add(new Paragraph(new Run(FindResource("URA Version :").ToString() + lblURAVersionContent.Content.ToString())));
+                    myFlowDoc.Blocks.Add(new Paragraph(new Run(FindResource("Mercury API Version :").ToString() + lblMercuryApiVersionContent.Content.ToString())));
                 }
                 else
                 {
                     lblRFIDEngineContent.Content = model.ToString();
-                    myFlowDoc.Blocks.Add(new Paragraph(new Run("RFID Engine : " + model.ToString())));
+                    myFlowDoc.Blocks.Add(new Paragraph(new Run(FindResource("RFID Engine :").ToString() + model.ToString())));
                     MatchCollection mc = null;
                     lblRFIDIPComContent.Content = "";
                     if (rdbtnNetworkConnection.IsChecked == true)
@@ -7875,7 +7875,7 @@ namespace ThingMagic.URA2
                             lblRFIDIPComContent.Content = m.ToString();
                         }
                     }
-                    myFlowDoc.Blocks.Add(new Paragraph(new Run("COM/IP : " + lblRFIDIPComContent.Content.ToString())));
+                    myFlowDoc.Blocks.Add(new Paragraph(new Run(FindResource("COM/IP :").ToString() + lblRFIDIPComContent.Content.ToString())));
 
                     //Get version information
                     string fwver = (string)objReader.ParamGet("/reader/version/software");
@@ -7892,7 +7892,7 @@ namespace ThingMagic.URA2
                     {
                         lblFirmwareVersionContent.Content = fwver;
                     }
-                    myFlowDoc.Blocks.Add(new Paragraph(new Run("Firmware Version : " + lblFirmwareVersionContent.Content)));
+                    myFlowDoc.Blocks.Add(new Paragraph(new Run(FindResource("Firmware Version :").ToString() + lblFirmwareVersionContent.Content)));
 
                     string[] hVersion;
                     string[] serialnumber;
@@ -7914,12 +7914,12 @@ namespace ThingMagic.URA2
                         lblHardwareVersionContent.Content = "-";
                         lblSerialNumberContent.Content = "-";
                     }
-                    myFlowDoc.Blocks.Add(new Paragraph(new Run("Hardware Version : " + lblHardwareVersionContent.Content.ToString())));
-                    myFlowDoc.Blocks.Add(new Paragraph(new Run("Serial Number : " + lblSerialNumberContent.Content.ToString())));
+                    myFlowDoc.Blocks.Add(new Paragraph(new Run(FindResource("Hardware Version :").ToString() + lblHardwareVersionContent.Content.ToString())));
+                    myFlowDoc.Blocks.Add(new Paragraph(new Run(FindResource("Serial Number :").ToString() + lblSerialNumberContent.Content.ToString())));
                     lblURAVersionContent.Content = this.GetType().Assembly.GetName().Version.ToString();
                     lblMercuryApiVersionContent.Content = Assembly.GetAssembly(typeof(ThingMagic.Reader)).GetName().Version.ToString();
-                    myFlowDoc.Blocks.Add(new Paragraph(new Run("URA Version : " + lblURAVersionContent.Content.ToString())));
-                    myFlowDoc.Blocks.Add(new Paragraph(new Run("Mercury API Version : " + lblMercuryApiVersionContent.Content.ToString())));
+                    myFlowDoc.Blocks.Add(new Paragraph(new Run(FindResource("URA Version :").ToString() + lblURAVersionContent.Content.ToString())));
+                    myFlowDoc.Blocks.Add(new Paragraph(new Run(FindResource("Mercury API Version :").ToString() + lblMercuryApiVersionContent.Content.ToString())));
                     lblRFIDEngine.Visibility = lblRFIDEngineContent.Visibility = lblFirmwareVersion.Visibility = lblFirmwareVersionContent.Visibility = lblHardwareVersion.Visibility = lblHardwareVersionContent.Visibility = lblSerialNumber.Visibility = lblSerialNumberContent.Visibility = lblRFIDIPCom.Visibility = lblRFIDIPComContent.Visibility = Visibility.Visible;
                 }
 
@@ -8499,7 +8499,7 @@ namespace ThingMagic.URA2
             //Firmware Update failed, disconnect the reader.
             this.Dispatcher.BeginInvoke(new ThreadStart(delegate()
             {
-                btnConnect.Content = "Disconnect";
+                btnConnect.Content = FindResource("btn Disconnect").ToString();
                 DisconnectDisable(true);//to activate disconnect button
                 btnConnect_Click(this, new RoutedEventArgs());
                 objReader = null;
@@ -8549,7 +8549,7 @@ namespace ThingMagic.URA2
                 //Firmware Update failed, disconnect the reader.
                 this.Dispatcher.BeginInvoke(new ThreadStart(delegate()
                 {
-                    btnConnect.Content = "Disconnect";
+                    btnConnect.Content = FindResource("btn Disconnect").ToString();
                     DisconnectDisable(true);//to activate the disconnect button
                     btnConnect_Click(this, new RoutedEventArgs());
                     objReader = null;
@@ -8775,7 +8775,7 @@ namespace ThingMagic.URA2
             btnUpdate.IsEnabled = true;
             btnChooseFirmware.IsEnabled = true;
             tcTagResults.IsEnabled = true;
-            btnConnect.Content = "Disconnect";
+            btnConnect.Content = FindResource("btn Disconnect").ToString();
             btnConnect_Click(this, new RoutedEventArgs());
             objReader = null;
             prgStart = false;
@@ -9009,7 +9009,7 @@ namespace ThingMagic.URA2
         private void tiWriteEPC_GotFocus(object sender, RoutedEventArgs e)
         {
             WriteEpc.LoadEPC(objReader);
-            if (lblshowStatus.Content.ToString() == "Reading")
+            if (lblshowStatus.Content.ToString() == FindResource("Reading").ToString())
             {
                 tiTagResults.Focus();
                 return;
@@ -9043,7 +9043,7 @@ namespace ThingMagic.URA2
         /// <param name="e"></param>
         private void tiTagInspector_GotFocus(object sender, RoutedEventArgs e)
         {
-            if (lblshowStatus.Content.ToString() == "Reading")
+            if (lblshowStatus.Content.ToString() == FindResource("Reading").ToString())
             {
                 tiTagResults.Focus();
                 return;
@@ -9077,7 +9077,7 @@ namespace ThingMagic.URA2
         /// <param name="e"></param>
         private void tiUserMemory_GotFocus(object sender, RoutedEventArgs e)
         {
-            if (lblshowStatus.Content.ToString() == "Reading")
+            if (lblshowStatus.Content.ToString() == FindResource("Reading").ToString())
             {
                 tiTagResults.Focus();
                 return;
@@ -9112,7 +9112,7 @@ namespace ThingMagic.URA2
         private void tiLockTag_GotFocus(object sender, RoutedEventArgs e)
         {
             LockTag.LoadReservedMemory(objReader, model);
-            if (lblshowStatus.Content.ToString() == "Reading")
+            if (lblshowStatus.Content.ToString() == FindResource("Reading").ToString())
             {
                 tiTagResults.Focus();
                 return;
@@ -9146,7 +9146,7 @@ namespace ThingMagic.URA2
         private void tiUntraceable_GotFocus(object sender, RoutedEventArgs e)
         {
             Untraceable.LoadUntraceableMemory(objReader, model);
-            if (lblshowStatus.Content.ToString() == "Reading")
+            if (lblshowStatus.Content.ToString() == FindResource("Reading").ToString())
             {
                 tiTagResults.Focus();
                 return;
@@ -9180,7 +9180,7 @@ namespace ThingMagic.URA2
         private void tiAuthenticate_GotFocus(object sender, RoutedEventArgs e)
         {
             Authenticate.LoadAuthenticateMemory(objReader, model);
-            if (lblshowStatus.Content.ToString() == "Reading")
+            if (lblshowStatus.Content.ToString() == FindResource("Reading").ToString())
             {
                 tiTagResults.Focus();
                 return;
@@ -9218,7 +9218,7 @@ namespace ThingMagic.URA2
             List<int> antlist = GetSelectedAntennaList();
             SensorTags.LoadSensorTagsMemory(objReader, model, antlist);
 
-            if (lblshowStatus.Content.ToString() == "Reading")
+            if (lblshowStatus.Content.ToString() == FindResource("Reading").ToString())
             {
                 tiTagResults.Focus();
                 return;
@@ -9292,7 +9292,7 @@ namespace ThingMagic.URA2
         {
             try
             {
-                if (btnConnect.Content.ToString().Equals("Connect"))
+                if (btnConnect.Content.ToString().Equals(FindResource("btn Connect").ToString()))
                 {
                     InitializeReaderUriBox();
                     btnConnectExpander.Content = btnConnect.Content.ToString();
@@ -9706,7 +9706,7 @@ namespace ThingMagic.URA2
         /// </summary>
         private void LoadConfigurations()
         {
-            if (lblshowStatus.Content.ToString() == "Disconnected")
+            if (lblshowStatus.Content.ToString() == FindResource("Disconnected").ToString())
             {
                 if (loadSaveConfig.Properties["/application/connect/readerType"].Equals("SerialReader"))
                 {
@@ -9762,7 +9762,7 @@ namespace ThingMagic.URA2
                     NotifyInvalidLoadConfigOption("/application/connect/enableTransportLogging");
                 }
                 btnConnect_Click_Body(this, new RoutedEventArgs());
-                if (lblshowStatus.Content.ToString() == "Connected")
+                if (lblshowStatus.Content.ToString() == FindResource("Connected").ToString())
                 {
                     LoadAfterConnectConfigurations();
                     Mouse.SetCursor(Cursors.Arrow);
@@ -9800,7 +9800,7 @@ namespace ThingMagic.URA2
             {
                 if (loadSaveConfig.Properties["/application/connect/enableTransportLogging"].ToLower().Equals("true"))
                 {
-                    if (lblshowStatus.Content.ToString() == "Connected")
+                    if (lblshowStatus.Content.ToString() == FindResource("Connected").ToString())
                     {
                         if ((bool)chkEnableTransportLogging.IsChecked)
                         {
@@ -12210,7 +12210,7 @@ namespace ThingMagic.URA2
                 if ((bool)child.IsChecked)
                 {
                     // Stack panel has antenna detection check-box as a child. Don't include this in antenna list.
-                    if (!(child.Content.Equals("Antenna Detection")))
+                    if (!(child.Content.Equals(FindResource("Antenna Detection").ToString())))
                     {
                         antennas.Append(child.Content.ToString());
                         antennas.Append(",");
@@ -14056,7 +14056,7 @@ namespace ThingMagic.URA2
                             {
                                 lblWarning.Dispatcher.BeginInvoke(new ThreadStart(delegate()
                                 {
-                                    warningText = "Please make sure to provide additional DC power source to the reader";
+                                    warningText = FindResource("Please make sure to provide additional DC power source to the reader").ToString();
                                     DisplayMessageOnStatusBar(warningText, (SolidColorBrush)(new BrushConverter().ConvertFrom("#ff9400")));
                                 }));
                             }
@@ -14095,7 +14095,7 @@ namespace ThingMagic.URA2
                             {
                                 lblWarning.Dispatcher.BeginInvoke(new ThreadStart(delegate()
                                 {
-                                    warningText = "Please make sure to provide additional DC power source to the reader";
+                                    warningText = FindResource("Please make sure to provide additional DC power source to the reader").ToString();
                                     DisplayMessageOnStatusBar(warningText, (SolidColorBrush)(new BrushConverter().ConvertFrom("#ff9400")));
                                 }));
                             }
@@ -14164,7 +14164,7 @@ namespace ThingMagic.URA2
                     {
                         lblWarning.Dispatcher.BeginInvoke(new ThreadStart(delegate()
                         {
-                            warningText = "Please make sure to provide additional DC power source to the reader";
+                            warningText = FindResource("Please make sure to provide additional DC power source to the reader").ToString();
                             DisplayMessageOnStatusBar(warningText, (SolidColorBrush)(new BrushConverter().ConvertFrom("#ff9400")));
                         }));
                     }
@@ -15819,9 +15819,9 @@ namespace ThingMagic.URA2
         int gpi_timeout = 250;
         private void StartReading_gpi_button_Click(object sender, RoutedEventArgs e)
         {
-            if (startReading_gpi_button.Content.Equals("start"))
+            if (startReading_gpi_button.Content.Equals(FindResource("Start GPI").ToString()))
             {
-                startReading_gpi_button.Content = "stop";
+                startReading_gpi_button.Content = FindResource("Stop GPI").ToString();
                 write_operation_stackpanel.IsEnabled = false;
                 btnRead.IsEnabled = false;
 
@@ -15846,10 +15846,10 @@ namespace ThingMagic.URA2
                     asyncReadThread.Start();
                 }
             }
-            else if (startReading_gpi_button.Content.Equals("stop"))
+            else if (startReading_gpi_button.Content.Equals(FindResource("Stop GPI").ToString()))
             {
                 _exitNow = true;
-                startReading_gpi_button.Content = "start";
+                startReading_gpi_button.Content = FindResource("Start GPI").ToString();
                 write_operation_stackpanel.IsEnabled = true;
                 btnRead.IsEnabled = true;
 
@@ -16116,9 +16116,9 @@ namespace ThingMagic.URA2
             Gen2.Bank selectMemBank = Gen2.Bank.EPC;
             TagFilter searchSelect = null;
 
-            if (batch_write_button.Content.Equals("Write"))
+            if (batch_write_button.Content.Equals(FindResource("Write").ToString()))
             {
-                batch_write_button.Content = "StopWriting";
+                batch_write_button.Content = FindResource("StopWriting").ToString();
                 gpi_detect_stackpanel.IsEnabled = false;
                 btnRead.IsEnabled = false;
 
@@ -16234,14 +16234,14 @@ namespace ThingMagic.URA2
                 {
                     MessageBox.Show("Success= " + successCount + " Failed= " + failedCount, "写标签", MessageBoxButton.OK, MessageBoxImage.Information);
                 }));
-                batch_write_button.Content = "Write";
+                batch_write_button.Content = FindResource("Write").ToString();
                 gpi_detect_stackpanel.IsEnabled = true;
                 btnRead.IsEnabled = true;
                 writing_status_label.Content = "";
             }
-            else if (batch_write_button.Content.Equals("StopWriting"))
+            else if (batch_write_button.Content.Equals(FindResource("StopWriting").ToString()))
             {
-                batch_write_button.Content = "Write";
+                batch_write_button.Content = FindResource("Write").ToString();
                 gpi_detect_stackpanel.IsEnabled = true;
                 btnRead.IsEnabled = true;
             }
