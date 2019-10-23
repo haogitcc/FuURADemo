@@ -23,6 +23,7 @@
         <StackPanel Orientation="Horizontal" Grid.Row="0" Grid.ColumnSpan="3">
             <Button Name="temp_read_button" Content="Read" Width="75" Margin="5" Click="Temp_read_button_Click"/>
             <Button Name="temp_clear_button" Content="Clear" Width="75" Margin="5" Click="Temp_clear_button_Click"/>
+            <Button Name="test_button" Content="Test" Width="75" Margin="5" Click="Test_button_Click"/>
         </StackPanel>
         <GroupBox Background="White" Grid.Row="1" Grid.ColumnSpan="1">
             <GroupBox.Header>

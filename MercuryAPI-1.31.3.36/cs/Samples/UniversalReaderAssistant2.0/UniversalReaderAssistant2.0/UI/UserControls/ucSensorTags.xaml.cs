@@ -374,5 +374,165 @@ namespace ThingMagic.URA2.UI.UserControls
                 total_sensortags_read_count.Content = "0";
             }));
         }
+
+        private void Test_button_Click(object sender, RoutedEventArgs e)
+        {
+            if(test_button.Content.Equals("Test"))
+            {
+                test_button.Content = "Testing";
+                originalTarget = (Gen2.Target)objReader.ParamGet("/reader/gen2/target");
+                objReader.ParamSet("/reader/gen2/target", Gen2.Target.AB);
+                ReadVblTemp();
+            }
+            else if (test_button.Content.Equals("Testing"))
+            {
+                test_button.Content = "Test";
+
+                _exitNow = true;
+                while (asyncReadThread.ThreadState == ThreadState.Background)
+                {
+                    Thread.Sleep(100);
+                    Console.WriteLine("################ " + asyncReadThread.ThreadState);
+                }
+                objReader.ParamSet("/reader/gen2/target", originalTarget);
+            }
+        }
+
+        private Thread asyncReadThread = null;
+        protected bool _exitNow = false;
+        private ManualResetEvent waitUntilReadMethodCalled = new ManualResetEvent(false);
+        int gpi_timeout = 1000;
+        private Gen2.Target originalTarget;
+
+        private void ReadVblTemp()
+        {
+            if (null == asyncReadThread)
+            {
+                asyncReadThread = new Thread(StartContinuousRead);
+                asyncReadThread.IsBackground = true;
+                asyncReadThread.Start();
+            }
+        }
+
+        private void StartContinuousRead()
+        {
+            Console.WriteLine("1@#### StartContinuousRead");
+            try
+            {
+                int[] ants = new int[] { 1 };
+                //E2 C19 CB1 VBL
+                byte[] tid_mask = new byte[] { 0xE2, 0xC1, 0x9c, 0xB1 };
+                TagFilter target = new Gen2.Select(false, Gen2.Bank.TID, 0, 32, tid_mask);
+                List<ReadPlan> plans = new List<ReadPlan>();
+                TagOp tagOp1 = new Gen2.ReadData(Gen2.Bank.USER, 31, 1);
+                ReadPlan plan1 = new SimpleReadPlan(ants, TagProtocol.GEN2, target, tagOp1, false, 1000);
+                TagOp tagOp2 = new Gen2.ReadData(Gen2.Bank.RESERVED, 8, 1);
+                ReadPlan plan2 = new SimpleReadPlan(ants, TagProtocol.GEN2, target, tagOp2, false, 1000);
+                
+                while (!_exitNow)
+                {
+                    //int readTime = (int)objReader.ParamGet("/reader/read/asyncOnTime");
+                    int readTime = gpi_timeout;
+                    TagReadData[] trds1 = tRead(readTime, plan1);
+                    TagReadData[] trds2 = tRead(readTime, plan2);
+                    Console.WriteLine("############# TRD111111111");
+                    PrintTagReads(trds1);
+                    Console.WriteLine("############# TRD22222222");
+                    PrintTagReads(trds2);
+                    Console.WriteLine("#########################");
+
+                    //Dispatcher.BeginInvoke(new ThreadStart(delegate ()
+                    //{
+                    //    lock (tagdb)
+                    //    {
+                    //        tagdb.AddRange(trds);
+                    //    }
+                    //}));
+
+
+
+                    Console.WriteLine("2222 @#### StartContinuousRead ");
+                }
+
+                Console.WriteLine("2222 @#### StartContinuousRead  exit");
+            }
+            // Catch all exceptions.  We're in a background thread,
+            // so exceptions will be lost if we don't pass them on.
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.ToString());
+            }
+        }
+
+        /// <summary>
+        /// Read RFID tags for a fixed duration.
+        /// </summary>
+        /// <param name="timeout">the time to spend reading tags, in milliseconds</param>
+        /// <returns>the tags read</returns>
+        public TagReadData[] tRead(int timeout, ReadPlan rp)
+        {
+            Console.WriteLine("1@#### tRead timeout=" + timeout);
+            //CheckRegion();
+            if (timeout < 0)
+                throw new ArgumentOutOfRangeException("Timeout (" + timeout.ToString() + ") must be greater than or equal to 0");
+
+            else if (timeout > 65535)
+                throw new ArgumentOutOfRangeException("Timeout (" + timeout.ToString() + ") must be less than 65536");
+            
+            List<TagReadData> tagReads = new List<TagReadData>();
+
+            ReadInternal((UInt16)timeout, rp, ref tagReads);
+
+            return tagReads.ToArray();
+        }
+
+        // Stop trigger feature enabled or disabled
+        private void ReadInternal(UInt16 timeout, ReadPlan rp, ref List<TagReadData> tagReads)
+        {
+            Console.WriteLine("1@#### ReadInternal ");
+            if ((rp is SimpleReadPlan))
+            {
+                objReader.ParamSet("/reader/read/plan", rp);
+
+                DateTime now = DateTime.Now;
+                DateTime endTime = now.AddMilliseconds(timeout);
+
+                while (now <= endTime)
+                {
+                    TimeSpan totalTagFetchTime = new TimeSpan();
+                    TimeSpan timeElapsed = endTime - now;
+                    timeout = ((ushort)timeElapsed.TotalMilliseconds < 65535) ? (ushort)timeElapsed.TotalMilliseconds : (ushort)65535;
+                    Console.WriteLine("1@#### ReadInternal timeout=" + timeout);
+                    TagReadData[] trds = objReader.Read(timeout);
+                    tagReads.AddRange(trds);
+
+                    now = DateTime.Now - totalTagFetchTime;
+                }
+            }
+        }
+
+        void PrintTagReadHandler(Object sender, TagReadDataEventArgs e)
+        {
+            PrintTagRead(e.TagReadData);
+        }
+
+        void PrintTagReads(TagReadData[] reads)
+        {
+            foreach (TagReadData read in reads)
+            {
+                PrintTagRead(read);
+            }
+        }
+
+        void PrintTagRead(TagReadData read)
+        {
+            List<string> strl = new List<string>();
+            strl.Add("EPC: " +read.EpcString);
+            if(read.RESERVEDMemData.Length > 0)
+            {
+                strl.Add("Data: " + ByteFormat.ToHex(read.RESERVEDMemData));
+            }
+            Console.WriteLine(String.Join(" ", strl.ToArray()));
+        }
     }
 }
