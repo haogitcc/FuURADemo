@@ -151,6 +151,7 @@
     <sys:String x:Key="IsFixed">IsFixed</sys:String>
 
     <sys:String x:Key="Start GPI">Start GPI</sys:String>
+    <sys:String x:Key="Stop GPI">Stop GPI</sys:String>
     
     <sys:String x:Key="tabHeader Tag Results">Tag Results</sys:String>
     <sys:String x:Key="tabHeader Tag Inspector">Tag Inspector</sys:String>

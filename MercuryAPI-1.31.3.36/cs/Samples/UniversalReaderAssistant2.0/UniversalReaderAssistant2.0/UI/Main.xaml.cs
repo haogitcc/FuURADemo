@@ -1851,6 +1851,7 @@ namespace ThingMagic.URA2
                 {
                     lock (tagdb)
                     {
+                        gpiIndex.Clear();
                         tagdb.Clear();
                         tagdb.Repaint();
                     }
@@ -3546,6 +3547,7 @@ namespace ThingMagic.URA2
         /// <param name="e"></param>
         private void rdbtnLocalConnection_Checked(object sender, RoutedEventArgs e)
         {
+            Console.WriteLine("### rdbtnLocalConnection_Checked " + sender.ToString());
             try
             {
                 if (lblbaudRate != null)
@@ -4406,6 +4408,9 @@ namespace ThingMagic.URA2
                             break;
                         case "GPIO":
                             tg = tg | SerialReader.TagMetadataFlag.GPIO;
+                            break;
+                        case "GpiDetect":
+                        case "WriteEpc":
                             break;
                         //case "BrandID":
                         //    tg = tg | SerialReader.TagMetadataFlag.BRAND_IDENTIFIER;
@@ -13250,6 +13255,9 @@ namespace ThingMagic.URA2
                         case "Frequency": newData = e.Frequency.ToString(); break;
                         case "Protocol": newData = e.Tag.Protocol.ToString(); break;
                         case "GPIO": newData = e.GPIO.ToString(); break;
+                        case "GpiDetect":
+                        case "WriteEpc":
+                            break;
                     }
                     if (!String.IsNullOrEmpty(newData))
                     {
@@ -13438,6 +13446,9 @@ namespace ThingMagic.URA2
                         case "Frequency": newData = "Frequency"; break;
                         case "Protocol": newData = "Protocol"; break;
                         case "GPIO": newData = "GPIO"; break;
+                        case "GpiDetect":
+                        case "WriteEpc":
+                            break;
                     }
                     if (!String.IsNullOrEmpty(newData))
                     {
@@ -15822,6 +15833,26 @@ namespace ThingMagic.URA2
             if (startReading_gpi_button.Content.Equals(FindResource("Start GPI").ToString()))
             {
                 startReading_gpi_button.Content = FindResource("Stop GPI").ToString();
+
+                if (regioncombo.SelectedItem.ToString() == "Select")
+                {
+                    MessageBox.Show("Please select a Region",
+                    "Universal Reader Assistant", MessageBoxButton.OK, MessageBoxImage.Error);
+                    return;
+                }
+
+                //Dispatcher.BeginInvoke(new ThreadStart(delegate ()
+                //{
+                //    gpi30_status.Source = new BitmapImage(new Uri(@"\Icons\LedRed.png", UriKind.RelativeOrAbsolute));
+                //    gpi31_status.Source = new BitmapImage(new Uri(@"\Icons\LedRed.png", UriKind.RelativeOrAbsolute));
+                //}));
+
+                // Set read plans 
+                SetReadPlans();
+
+                // Register exception handler
+                objReader.ReadException += ReadException;
+
                 write_operation_stackpanel.IsEnabled = false;
                 btnRead.IsEnabled = false;
 
@@ -15855,8 +15886,11 @@ namespace ThingMagic.URA2
 
                 while (asyncReadThread.ThreadState == ThreadState.Background)
                 {
+                    Thread.Sleep(100);
                     Console.WriteLine("################ " + asyncReadThread.ThreadState);
                 }
+
+                objReader.ReadException -= ReadException;
 
                 //// Stop timer to render data on the grid
                 dispatchtimer.Stop();
@@ -15889,11 +15923,19 @@ namespace ThingMagic.URA2
                     }));
 
                     GpioPin[] gpis = objReader.GpiGet();
-                    gpiIndex.Clear();
+                    //gpiIndex.Clear();
                     foreach (GpioPin gpi in gpis)
                     {
-                        gpiIndex.Add(gpi.Id, gpi);
-                        Console.WriteLine(gpi.Id + ":" + gpi.Output + ":" + gpi.High);
+                        Console.WriteLine("gpisCount= " + gpis.Count() + ":" + gpi.Id + ":" + gpi.Output + ":" + gpi.High);
+                        if(gpiIndex.ContainsKey(gpi.Id))
+                        {
+                            gpiIndex[gpi.Id] = gpi;
+                        }
+                        else
+                        {
+                            gpiIndex.Add(gpi.Id, gpi);
+                            Console.WriteLine("###add gpi.id="+gpi.Id);
+                        }
                     }
 
                     Dispatcher.BeginInvoke(new ThreadStart(delegate ()
@@ -15907,12 +15949,12 @@ namespace ThingMagic.URA2
 
                     Dispatcher.BeginInvoke(new ThreadStart(delegate ()
                     {
-                        //gpi30_status.Source = gpiIndex[30].High == true ?
-                        gpi30_status.Source = gpiIndex[5].High == true ?
+                        gpi30_status.Source = gpiIndex[30].High == true ?
+                        //gpi30_status.Source = gpiIndex[5].High == true ?
                             new BitmapImage(new Uri(@"\Icons\LedRed.png", UriKind.RelativeOrAbsolute)) :
                             new BitmapImage(new Uri(@"\Icons\LedGreen.png", UriKind.RelativeOrAbsolute));
-                        //gpi31_status.Source = gpiIndex[31].High == true ?
-                        gpi31_status.Source = gpiIndex[6].High == true ?
+                        gpi31_status.Source = gpiIndex[31].High == true ?
+                        //gpi31_status.Source = gpiIndex[6].High == true ?
                             new BitmapImage(new Uri(@"\Icons\LedRed.png", UriKind.RelativeOrAbsolute)) :
                             new BitmapImage(new Uri(@"\Icons\LedGreen.png", UriKind.RelativeOrAbsolute));
                     }));

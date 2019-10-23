@@ -36,7 +36,7 @@ namespace ThingMagic.URA2.BL
         /// <param name="data">New tag read</param>
         public void Update(TagReadData mergeData)
         {
-            Console.WriteLine("*** Update " + mergeData.EpcString);
+            //Console.WriteLine("*** Update " + mergeData.EpcString);
             mergeData.ReadCount += ReadCount;
             TimeSpan timediff = mergeData.Time.ToUniversalTime() - this.TimeStamp.ToUniversalTime();
             // Update only the read counts and not overwriting the tag
@@ -51,7 +51,7 @@ namespace ThingMagic.URA2.BL
                 RawRead.ReadCount = mergeData.ReadCount;
             }
 
-            Console.WriteLine("Update isSensorTags=" + isSensorTags);
+            //Console.WriteLine("Update isSensorTags=" + isSensorTags);
             if (isSensorTags)
             {
                 temperature = getTemperature(mergeData);
@@ -217,46 +217,46 @@ namespace ThingMagic.URA2.BL
             get { return temperature; }
             set
             {
-                Console.WriteLine("#### set Temperature= " + value);
+                //Console.WriteLine("#### set Temperature= " + value);
                 temperature = value;
             }
         }
 
         private double getTemperature(TagReadData RawRead)
         {
-            Console.WriteLine("*** getTemperature IsSensorTags=" + IsSensorTags);
+            //Console.WriteLine("*** getTemperature IsSensorTags=" + IsSensorTags);
             double temp = Temperature;
             if(IsSensorTags)
             {
                 if (RawRead.Data.Length > 0)
                 {
-                    Console.WriteLine(ByteFormat.ToHex(RawRead.Data, "", " "));
+                    //Console.WriteLine(ByteFormat.ToHex(RawRead.Data, "", " "));
                     int delta1 = 0;
                     double delta2 = 0;
                     delta1 = byteArrayToInt(RawRead.Data, 0);
                     delta2 = delta1 / 100d - 101d;
-                    Console.WriteLine("d1=" + delta1 + ", d2=" + delta2);
+                    //Console.WriteLine("d1=" + delta1 + ", d2=" + delta2);
 
                     //2A54 0000 0000 0000 F70B F045
                     byte[] bepc = RawRead.Tag.EpcBytes;
                     byte[] s06 = new byte[] { bepc[8], bepc[9] };
                     byte[] s07 = new byte[] { bepc[10], bepc[11] };
-                    Console.WriteLine("s06=" + ByteFormat.ToHex(s06, "", ""));
-                    Console.WriteLine("s07=" + ByteFormat.ToHex(s07, "", ""));
+                    //Console.WriteLine("s06=" + ByteFormat.ToHex(s06, "", ""));
+                    //Console.WriteLine("s07=" + ByteFormat.ToHex(s07, "", ""));
 
                     string s_SEN_DATA = ByteFormat.ToHex(s06, "", "").Substring(1) + ByteFormat.ToHex(s07, "", "").Substring(1);
-                    Console.WriteLine("s_SEN_DATA=" + s_SEN_DATA);
+                    //Console.WriteLine("s_SEN_DATA=" + s_SEN_DATA);
 
                     //int i_SEN_DATA = int.Parse(s_SEN_DATA, System.Globalization.NumberStyles.HexNumber);
                     int i_SEN_DATA = Convert.ToInt32(s_SEN_DATA, 16);
-                    Console.WriteLine("i_SEN_DATA=" + i_SEN_DATA);
+                    //Console.WriteLine("i_SEN_DATA=" + i_SEN_DATA);
 
                     double D1 = (i_SEN_DATA & 0x00F80000) >> 19;
                     double D2 = ((i_SEN_DATA & 0x0007FFF8) >> 3) & 0x0000FFFF;
-                    Console.WriteLine("D1=" + D1 + ", D2=" + D2);
+                    //Console.WriteLine("D1=" + D1 + ", D2=" + D2);
                     Console.WriteLine(11984.47 + ":" + (21.25 + D1 + D2 / 2752 + delta2));
                     double temperature = 11984.47 / (21.25 + D1 + (D2 / 2752) + delta2) - 301.57;
-                    Console.WriteLine("temperature=" + temperature);
+                    Console.WriteLine("getTemperature temperature=" + temperature);
                     Console.WriteLine();
                     temp = temperature;
                 }
@@ -417,7 +417,7 @@ namespace ThingMagic.URA2.BL
                 case "Temperature":
                     comparer = new Comparison<TagReadRecord>(delegate (TagReadRecord a, TagReadRecord b)
                     {
-                        Console.WriteLine("#### compare Temperature");
+                        //Console.WriteLine("#### compare Temperature");
                         if (a.Temperature - b.Temperature != 0)
                             return 1;
                         else
@@ -504,7 +504,7 @@ namespace ThingMagic.URA2.BL
                 if(IsTagdbSensortags)
                 {
                     key = addData.EpcString.Substring(0, 4);
-                    Console.WriteLine("*** tagdb add key=" + key);
+                    //Console.WriteLine("*** tagdb add key=" + key);
                 }
                 else
                 {
@@ -563,11 +563,13 @@ namespace ThingMagic.URA2.BL
                         value.IsSensorTags = true;
                     }
 
+                    //Console.WriteLine("### gpio=" + value.GPIO);
+
                     _tagList.Add(value);
                     EpcIndex.Add(key, value);
                     //Call this method to calculate total tag reads and unique tag read counts 
                     UpdateTagCountTextBox(EpcIndex);
-                    Console.WriteLine("tagdb add ["+key+"]");
+                    //Console.WriteLine("tagdb add ["+key+"]");
                 }
                 else
                 {
@@ -579,37 +581,37 @@ namespace ThingMagic.URA2.BL
 
         private double tagdbGetTemperature(TagReadData RawRead)
         {
-            Console.WriteLine("*** tagdbGetTemperature IsTagdbSensortags=" + IsTagdbSensortags);
+            //Console.WriteLine("*** tagdbGetTemperature IsTagdbSensortags=" + IsTagdbSensortags);
             double temp = 0.0;
             if (IsTagdbSensortags)
             {
                 if (RawRead.Data.Length > 0)
                 {
-                    Console.WriteLine(ByteFormat.ToHex(RawRead.Data, "", " "));
+                    //Console.WriteLine(ByteFormat.ToHex(RawRead.Data, "", " "));
                     int delta1 = 0;
                     double delta2 = 0;
                     delta1 = tagdbByteArrayToInt(RawRead.Data, 0);
                     delta2 = delta1 / 100d - 101d;
-                    Console.WriteLine("d1=" + delta1 + ", d2=" + delta2);
+                    //Console.WriteLine("d1=" + delta1 + ", d2=" + delta2);
 
                     //2A54 0000 0000 0000 F70B F045
                     byte[] bepc = RawRead.Tag.EpcBytes;
                     byte[] s06 = new byte[] { bepc[8], bepc[9] };
                     byte[] s07 = new byte[] { bepc[10], bepc[11] };
-                    Console.WriteLine("s06=" + ByteFormat.ToHex(s06, "", ""));
-                    Console.WriteLine("s07=" + ByteFormat.ToHex(s07, "", ""));
+                    //Console.WriteLine("s06=" + ByteFormat.ToHex(s06, "", ""));
+                    //Console.WriteLine("s07=" + ByteFormat.ToHex(s07, "", ""));
 
                     string s_SEN_DATA = ByteFormat.ToHex(s06, "", "").Substring(1) + ByteFormat.ToHex(s07, "", "").Substring(1);
-                    Console.WriteLine("s_SEN_DATA=" + s_SEN_DATA);
+                    //Console.WriteLine("s_SEN_DATA=" + s_SEN_DATA);
 
                     //int i_SEN_DATA = int.Parse(s_SEN_DATA, System.Globalization.NumberStyles.HexNumber);
                     int i_SEN_DATA = Convert.ToInt32(s_SEN_DATA, 16);
-                    Console.WriteLine("i_SEN_DATA=" + i_SEN_DATA);
+                    //Console.WriteLine("i_SEN_DATA=" + i_SEN_DATA);
 
                     double D1 = (i_SEN_DATA & 0x00F80000) >> 19;
                     double D2 = ((i_SEN_DATA & 0x0007FFF8) >> 3) & 0x0000FFFF;
-                    Console.WriteLine("D1=" + D1 + ", D2=" + D2);
-                    Console.WriteLine(11984.47 + ":" + (21.25 + D1 + D2 / 2752 + delta2));
+                    //Console.WriteLine("D1=" + D1 + ", D2=" + D2);
+                    //Console.WriteLine(11984.47 + ":" + (21.25 + D1 + D2 / 2752 + delta2));
                     double temperature = 11984.47 / (21.25 + D1 + (D2 / 2752) + delta2) - 301.57;
                     Console.WriteLine("temperature=" + temperature);
                     Console.WriteLine();
