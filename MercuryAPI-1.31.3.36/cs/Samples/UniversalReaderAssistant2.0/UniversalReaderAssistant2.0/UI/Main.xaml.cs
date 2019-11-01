@@ -15926,7 +15926,7 @@ namespace ThingMagic.URA2
                     //gpiIndex.Clear();
                     foreach (GpioPin gpi in gpis)
                     {
-                        Console.WriteLine("gpisCount= " + gpis.Count() + ":" + gpi.Id + ":" + gpi.Output + ":" + gpi.High);
+                        Console.WriteLine("gpisCount= " + gpis.Count() + " [" + gpi.Id + ":" + gpi.High + "]");
                         if(gpiIndex.ContainsKey(gpi.Id))
                         {
                             gpiIndex[gpi.Id] = gpi;
@@ -15949,12 +15949,12 @@ namespace ThingMagic.URA2
 
                     Dispatcher.BeginInvoke(new ThreadStart(delegate ()
                     {
-                        gpi30_status.Source = gpiIndex[30].High == true ?
-                        //gpi30_status.Source = gpiIndex[5].High == true ?
+                        //gpi30_status.Source = gpiIndex[30].High == true ?
+                        gpi30_status.Source = gpiIndex[5].High == true ?
                             new BitmapImage(new Uri(@"\Icons\LedRed.png", UriKind.RelativeOrAbsolute)) :
                             new BitmapImage(new Uri(@"\Icons\LedGreen.png", UriKind.RelativeOrAbsolute));
-                        gpi31_status.Source = gpiIndex[31].High == true ?
-                        //gpi31_status.Source = gpiIndex[6].High == true ?
+                        //gpi31_status.Source = gpiIndex[31].High == true ?
+                        gpi31_status.Source = gpiIndex[6].High == true ?
                             new BitmapImage(new Uri(@"\Icons\LedRed.png", UriKind.RelativeOrAbsolute)) :
                             new BitmapImage(new Uri(@"\Icons\LedGreen.png", UriKind.RelativeOrAbsolute));
                     }));

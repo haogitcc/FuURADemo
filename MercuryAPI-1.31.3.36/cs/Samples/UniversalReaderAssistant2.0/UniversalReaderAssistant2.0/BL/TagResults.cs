@@ -22,7 +22,11 @@ namespace ThingMagic.URA2.BL
         protected string newEpc = "";
         protected int writeStatus = 0;
         protected double temperature = 0.0;
-        protected bool isSensorTags = false;
+        protected bool isJohar = false;
+        protected bool isVBL = false;
+        protected bool isVBL_Tune = false;
+        protected bool isVBL_NValue = false;
+
         public TagReadRecord(TagReadData newData)
         {
             lock (new Object())
@@ -51,10 +55,28 @@ namespace ThingMagic.URA2.BL
                 RawRead.ReadCount = mergeData.ReadCount;
             }
 
-            //Console.WriteLine("Update isSensorTags=" + isSensorTags);
-            if (isSensorTags)
+            //Console.WriteLine("Update isJohar=" + isJohar);
+            if (isJohar)
             {
-                temperature = getTemperature(mergeData);
+                temperature = getJoharTemp(mergeData);
+            }
+            else if(isVBL)
+            {
+                if (isVBL_Tune == true && isVBL_NValue == false)
+                {
+                    if (VBL_Tune.Trim().Equals(""))
+                        VBL_Tune = ByteFormat.ToHex(mergeData.Data, "", "");
+                }
+                else if (isVBL_Tune == false && isVBL_NValue == true)
+                {
+                    VBL_NValue = ByteFormat.ToHex(mergeData.Data, "", "");
+                    if(!VBL_Tune.Trim().Equals("")&&!VBL_NValue.Trim().Equals(""))
+                    {
+                        double temp = getVBLTemp(VBL_Tune, VBL_NValue, mergeData);
+                        if(temp != UNSPECTTEMP)
+                            temperature = temp;
+                    }
+                }
             }
 
             OnPropertyChanged(null);
@@ -212,6 +234,10 @@ namespace ThingMagic.URA2.BL
             }
         }
 
+        public string VBL_Tune { get; set; } = "";
+
+        public string VBL_NValue { get; set; } = "";
+
         public double Temperature
         {
             get { return temperature; }
@@ -221,51 +247,93 @@ namespace ThingMagic.URA2.BL
                 temperature = value;
             }
         }
-
-        private double getTemperature(TagReadData RawRead)
+        
+        private double getJoharTemp(TagReadData RawRead)
         {
-            //Console.WriteLine("*** getTemperature IsSensorTags=" + IsSensorTags);
-            double temp = Temperature;
-            if(IsSensorTags)
+            double temp = 0.0;
+            if (RawRead.Data.Length > 0)
             {
-                if (RawRead.Data.Length > 0)
-                {
-                    //Console.WriteLine(ByteFormat.ToHex(RawRead.Data, "", " "));
-                    int delta1 = 0;
-                    double delta2 = 0;
-                    delta1 = byteArrayToInt(RawRead.Data, 0);
-                    delta2 = delta1 / 100d - 101d;
-                    //Console.WriteLine("d1=" + delta1 + ", d2=" + delta2);
+                //Console.WriteLine(ByteFormat.ToHex(RawRead.Data, "", " "));
+                int delta1 = 0;
+                double delta2 = 0;
+                delta1 = tagdbByteArrayToInt(RawRead.Data, 0);
+                delta2 = delta1 / 100d - 101d;
+                //Console.WriteLine("d1=" + delta1 + ", d2=" + delta2);
 
-                    //2A54 0000 0000 0000 F70B F045
-                    byte[] bepc = RawRead.Tag.EpcBytes;
-                    byte[] s06 = new byte[] { bepc[8], bepc[9] };
-                    byte[] s07 = new byte[] { bepc[10], bepc[11] };
-                    //Console.WriteLine("s06=" + ByteFormat.ToHex(s06, "", ""));
-                    //Console.WriteLine("s07=" + ByteFormat.ToHex(s07, "", ""));
+                //2A54 0000 0000 0000 F70B F045
+                byte[] bepc = RawRead.Tag.EpcBytes;
+                byte[] s06 = new byte[] { bepc[8], bepc[9] };
+                byte[] s07 = new byte[] { bepc[10], bepc[11] };
+                //Console.WriteLine("s06=" + ByteFormat.ToHex(s06, "", ""));
+                //Console.WriteLine("s07=" + ByteFormat.ToHex(s07, "", ""));
 
-                    string s_SEN_DATA = ByteFormat.ToHex(s06, "", "").Substring(1) + ByteFormat.ToHex(s07, "", "").Substring(1);
-                    //Console.WriteLine("s_SEN_DATA=" + s_SEN_DATA);
+                string s_SEN_DATA = ByteFormat.ToHex(s06, "", "").Substring(1) + ByteFormat.ToHex(s07, "", "").Substring(1);
+                //Console.WriteLine("s_SEN_DATA=" + s_SEN_DATA);
 
-                    //int i_SEN_DATA = int.Parse(s_SEN_DATA, System.Globalization.NumberStyles.HexNumber);
-                    int i_SEN_DATA = Convert.ToInt32(s_SEN_DATA, 16);
-                    //Console.WriteLine("i_SEN_DATA=" + i_SEN_DATA);
+                //int i_SEN_DATA = int.Parse(s_SEN_DATA, System.Globalization.NumberStyles.HexNumber);
+                int i_SEN_DATA = Convert.ToInt32(s_SEN_DATA, 16);
+                //Console.WriteLine("i_SEN_DATA=" + i_SEN_DATA);
 
-                    double D1 = (i_SEN_DATA & 0x00F80000) >> 19;
-                    double D2 = ((i_SEN_DATA & 0x0007FFF8) >> 3) & 0x0000FFFF;
-                    //Console.WriteLine("D1=" + D1 + ", D2=" + D2);
-                    Console.WriteLine(11984.47 + ":" + (21.25 + D1 + D2 / 2752 + delta2));
-                    double temperature = 11984.47 / (21.25 + D1 + (D2 / 2752) + delta2) - 301.57;
-                    Console.WriteLine("getTemperature temperature=" + temperature);
-                    Console.WriteLine();
-                    temp = temperature;
-                }
-                    return temp;
+                double D1 = (i_SEN_DATA & 0x00F80000) >> 19;
+                double D2 = ((i_SEN_DATA & 0x0007FFF8) >> 3) & 0x0000FFFF;
+                //Console.WriteLine("D1=" + D1 + ", D2=" + D2);
+                //Console.WriteLine(11984.47 + ":" + (21.25 + D1 + D2 / 2752 + delta2));
+                double temperature = 11984.47 / (21.25 + D1 + (D2 / 2752) + delta2) - 301.57;
+                Console.WriteLine("temperature=" + temperature);
+                Console.WriteLine();
+                temp = temperature;
             }
             return temp;
         }
 
-        private static int byteArrayToInt(byte[] data, int offset)
+        string old_NValue = "";
+        private double UNSPECTTEMP = -100.0;
+        private double getVBLTemp(string Tune, string NValue, TagReadData mergeData)
+        {
+            double temp = UNSPECTTEMP;
+            double tune = 0.0;
+            double nvalue = 0.0;
+            //Console.WriteLine(mergeData.EpcString + " ,Tune=" + Tune + ", old_NValue=" + old_NValue + ", NValue=" + NValue);
+            if (!old_NValue.Equals("") && old_NValue.StartsWith("3"))
+            {
+                if (NValue.StartsWith("0"))
+                {
+                    //Console.WriteLine(mergeData.EpcString + " ,Tune=" + Tune + ", old_NValue=" + old_NValue + ", NValue=" + NValue);
+                    tune = parseVBLTune(Tune);
+                    nvalue = parseVBLNValue(old_NValue);
+                    temp = (nvalue + tune - 500) / 5.4817 + 24.9;
+                }
+            }
+            old_NValue = NValue;
+            return temp;
+        }
+
+        private double parseVBLNValue(string nvalue)
+        {
+            double NValue = 0.0;
+            string nvalue_string = "0" + nvalue.Substring(1);
+            NValue = Convert.ToUInt16(nvalue_string, 16);
+            //Console.WriteLine("NValue(" + nvalue_string + ")=" + NValue);
+            return NValue;
+        }
+
+        private double parseVBLTune(string tune)
+        {
+            double Tune = 0.0;
+            byte[] data = ByteFormat.FromHex(tune);
+            if(data[0] == 0x0)
+            {
+                Tune = data[1];
+            }
+            else if(data[0] == 0x1)
+            {
+                Tune = - data[1];
+            }
+            //Console.WriteLine("Tune= " + Tune);
+            return Tune;
+        }
+
+        private static int tagdbByteArrayToInt(byte[] data, int offset)
         {
             int value = 0;
             int len = data.Length;
@@ -277,12 +345,39 @@ namespace ThingMagic.URA2.BL
             return value;
         }
 
-        public bool IsSensorTags
+        public bool IsJohar
         {
-            get { return isSensorTags; }
+            get { return isJohar; }
             set
             {
-                isSensorTags = value;
+                isJohar = value;
+            }
+        }
+
+        public bool IsVBL
+        {
+            get { return isVBL; }
+            set
+            {
+                isVBL = value;
+            }
+        }
+
+        public bool IsVBL_Tune
+        {
+            get { return isVBL_Tune; }
+            set
+            {
+                isVBL_Tune = value;
+            }
+        }
+
+        public bool IsVBL_NValue
+        {
+            get { return isVBL_NValue; }
+            set
+            {
+                isVBL_NValue = value;
             }
         }
 
@@ -424,6 +519,19 @@ namespace ThingMagic.URA2.BL
                             return 0;
                     });
                     break;
+
+                case "VBL_Tune":
+                    comparer = new Comparison<TagReadRecord>(delegate (TagReadRecord a, TagReadRecord b)
+                    {
+                        return String.Compare(a.VBL_Tune, b.VBL_Tune);
+                    });
+                    break;
+                case "VBL_NValue":
+                    comparer = new Comparison<TagReadRecord>(delegate (TagReadRecord a, TagReadRecord b)
+                    {
+                        return String.Compare(a.VBL_NValue, b.VBL_NValue);
+                    });
+                    break;
             }
             return comparer;
         }
@@ -463,7 +571,7 @@ namespace ThingMagic.URA2.BL
 
         static long UniqueTagCounts = 0;
         static long TotalTagCounts = 0;
-
+        
         public TagDatabase()
         {
             // GUI can't keep up with fast updates, so disable automatic triggers
@@ -483,7 +591,11 @@ namespace ThingMagic.URA2.BL
             get { return TotalTagCounts; }
         }
 
-        public bool IsTagdbSensortags { get; set; }
+        public bool tagdbIsJohar { get; set; }
+
+        public bool tagdbIsVBL { get; set; }
+        public bool tagdbIsVBL_Tune { get;  set; }
+        public bool tagdbIsVBL_NValue { get;  set; }
 
         public void Clear()
         {
@@ -501,10 +613,14 @@ namespace ThingMagic.URA2.BL
             {
                 string key = null;
 
-                if(IsTagdbSensortags)
+                if (tagdbIsJohar)
                 {
                     key = addData.EpcString.Substring(0, 4);
                     //Console.WriteLine("*** tagdb add key=" + key);
+                }
+                else if (tagdbIsVBL)
+                {
+                    key = addData.EpcString; //if only keying on EPCID
                 }
                 else
                 {
@@ -557,10 +673,26 @@ namespace ThingMagic.URA2.BL
                 {
                     TagReadRecord value = new TagReadRecord(addData);
                     value.SerialNumber = (uint)EpcIndex.Count + 1;
-                    if(IsTagdbSensortags)
+                    if (tagdbIsJohar)
                     {
-                        value.Temperature = tagdbGetTemperature(addData); //ToDo add temperature
-                        value.IsSensorTags = true;
+                        Console.WriteLine("### IsJohar=" + tagdbIsJohar);
+                        value.IsJohar = true;
+                        value.Temperature = 0.0;// tagdbGetTemperature(addData); //ToDo add temperature
+
+                    }
+                    else if (tagdbIsVBL)
+                    {
+                        value.IsVBL = true;
+                        if (tagdbIsVBL_Tune == true && tagdbIsVBL_NValue == false)
+                        {
+                            value.IsVBL_Tune = true;
+                            value.IsVBL_NValue = false;
+                        }
+                        else if (tagdbIsVBL_Tune == false && tagdbIsVBL_NValue == true)
+                        {
+                            value.IsVBL_Tune = false;
+                            value.IsVBL_NValue = true;
+                        }
                     }
 
                     //Console.WriteLine("### gpio=" + value.GPIO);
@@ -573,65 +705,28 @@ namespace ThingMagic.URA2.BL
                 }
                 else
                 {
+                    if (tagdbIsVBL)
+                    {
+                        EpcIndex[key].IsVBL = true;
+                        if (tagdbIsVBL_Tune == true && tagdbIsVBL_NValue == false)
+                        {
+                            EpcIndex[key].IsVBL_Tune = true;
+                            EpcIndex[key].IsVBL_NValue = false;
+                            if (EpcIndex[key].VBL_Tune.Trim().Equals(""))
+                                EpcIndex[key].VBL_Tune = ByteFormat.ToHex(addData.Data, "", "");
+                        }
+                        else if (tagdbIsVBL_Tune == false && tagdbIsVBL_NValue == true)
+                        {
+                            EpcIndex[key].IsVBL_Tune = false;
+                            EpcIndex[key].IsVBL_NValue = true;
+                            EpcIndex[key].VBL_NValue = ByteFormat.ToHex(addData.Data, "", "");
+                        }
+                    }
+
                     EpcIndex[key].Update(addData); //ToDo update temperature
                     UpdateTagCountTextBox(EpcIndex);
                 }
             }
-        }
-
-        private double tagdbGetTemperature(TagReadData RawRead)
-        {
-            //Console.WriteLine("*** tagdbGetTemperature IsTagdbSensortags=" + IsTagdbSensortags);
-            double temp = 0.0;
-            if (IsTagdbSensortags)
-            {
-                if (RawRead.Data.Length > 0)
-                {
-                    //Console.WriteLine(ByteFormat.ToHex(RawRead.Data, "", " "));
-                    int delta1 = 0;
-                    double delta2 = 0;
-                    delta1 = tagdbByteArrayToInt(RawRead.Data, 0);
-                    delta2 = delta1 / 100d - 101d;
-                    //Console.WriteLine("d1=" + delta1 + ", d2=" + delta2);
-
-                    //2A54 0000 0000 0000 F70B F045
-                    byte[] bepc = RawRead.Tag.EpcBytes;
-                    byte[] s06 = new byte[] { bepc[8], bepc[9] };
-                    byte[] s07 = new byte[] { bepc[10], bepc[11] };
-                    //Console.WriteLine("s06=" + ByteFormat.ToHex(s06, "", ""));
-                    //Console.WriteLine("s07=" + ByteFormat.ToHex(s07, "", ""));
-
-                    string s_SEN_DATA = ByteFormat.ToHex(s06, "", "").Substring(1) + ByteFormat.ToHex(s07, "", "").Substring(1);
-                    //Console.WriteLine("s_SEN_DATA=" + s_SEN_DATA);
-
-                    //int i_SEN_DATA = int.Parse(s_SEN_DATA, System.Globalization.NumberStyles.HexNumber);
-                    int i_SEN_DATA = Convert.ToInt32(s_SEN_DATA, 16);
-                    //Console.WriteLine("i_SEN_DATA=" + i_SEN_DATA);
-
-                    double D1 = (i_SEN_DATA & 0x00F80000) >> 19;
-                    double D2 = ((i_SEN_DATA & 0x0007FFF8) >> 3) & 0x0000FFFF;
-                    //Console.WriteLine("D1=" + D1 + ", D2=" + D2);
-                    //Console.WriteLine(11984.47 + ":" + (21.25 + D1 + D2 / 2752 + delta2));
-                    double temperature = 11984.47 / (21.25 + D1 + (D2 / 2752) + delta2) - 301.57;
-                    Console.WriteLine("temperature=" + temperature);
-                    Console.WriteLine();
-                    temp = temperature;
-                }
-                return temp;
-            }
-            return temp;
-        }
-
-        private static int tagdbByteArrayToInt(byte[] data, int offset)
-        {
-            int value = 0;
-            int len = data.Length;
-            for (int count = 0; count < len; count++)
-            {
-                value <<= 8;
-                value ^= (data[count + offset] & 0x000000FF);
-            }
-            return value;
         }
 
         //Calculate total tag reads and unique tag reads.

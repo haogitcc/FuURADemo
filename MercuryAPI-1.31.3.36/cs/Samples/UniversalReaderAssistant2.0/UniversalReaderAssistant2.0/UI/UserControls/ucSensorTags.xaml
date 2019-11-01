@@ -23,7 +23,8 @@
         <StackPanel Orientation="Horizontal" Grid.Row="0" Grid.ColumnSpan="3">
             <Button Name="temp_read_button" Content="Read" Width="75" Margin="5" Click="Temp_read_button_Click"/>
             <Button Name="temp_clear_button" Content="Clear" Width="75" Margin="5" Click="Temp_clear_button_Click"/>
-            <Button Name="test_button" Content="Test" Width="75" Margin="5" Click="Test_button_Click"/>
+            <Button Name="test_button" Content="Test" Width="75" Margin="5" Click="Test_button_Click" Visibility="Visible"/>
+            <Label x:Name="sensortags_readingstatus_label" Content="none" MinWidth="120" Margin="5"/>
         </StackPanel>
         <GroupBox Background="White" Grid.Row="1" Grid.ColumnSpan="1">
             <GroupBox.Header>
@@ -124,7 +125,11 @@
                         <DataGridTextColumn x:Name="serialNoColumn" Header="#" />
                         <DataGridTextColumn x:Name="epcColumn"/>
                         <DataGridTextColumn x:Name="antennaColumn"/>
+                        <DataGridTextColumn x:Name="dataColumn"/>
+                        <DataGridTextColumn x:Name="tuneColumn"/>
+                        <DataGridTextColumn x:Name="nValueColumn"/>
                         <DataGridTextColumn x:Name="TemperatureColumn" Visibility="Visible" />
+                        <DataGridTextColumn x:Name="readCountColumn"/>
                     </DataGrid.Columns>
                 </DataGrid>
                 <TextBox Visibility="Collapsed" Name="txtSelectedCell" Width="1"></TextBox>
