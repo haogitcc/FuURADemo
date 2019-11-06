@@ -23,7 +23,10 @@
         <StackPanel Orientation="Horizontal" Grid.Row="0" Grid.ColumnSpan="3">
             <Button Name="temp_read_button" Content="Read" Width="75" Margin="5" Click="Temp_read_button_Click"/>
             <Button Name="temp_clear_button" Content="Clear" Width="75" Margin="5" Click="Temp_clear_button_Click"/>
-            <Button Name="test_button" Content="Test" Width="75" Margin="5" Click="Test_button_Click" Visibility="Visible"/>
+            <StackPanel Orientation="Vertical" Margin="4" MinWidth="120">
+                <RadioButton x:Name="johar_radiobutton" Content="Johar" Margin="2"/>
+                <RadioButton x:Name="vbl_radiobutton" Content="VBL" Margin="2"/>
+            </StackPanel>
             <Label x:Name="sensortags_readingstatus_label" Content="none" MinWidth="120" Margin="5"/>
         </StackPanel>
         <GroupBox Background="White" Grid.Row="1" Grid.ColumnSpan="1">

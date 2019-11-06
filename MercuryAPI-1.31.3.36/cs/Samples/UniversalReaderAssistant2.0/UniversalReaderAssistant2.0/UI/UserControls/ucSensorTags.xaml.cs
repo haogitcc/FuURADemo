@@ -279,75 +279,133 @@ namespace ThingMagic.URA2.UI.UserControls
                     return;
                 }
                 temp_read_button.Content = "Stop";
-
-                //Johar: ClsId + VendorId + ModelId = E2 035 016
-                //2A54	E2 03 51 06 05 00 96 10 2A 54 00 00 00 00 00 00	
-                byte[] tidmask = new byte[] { (byte)0xE2, (byte)0x03, (byte)0x51, (byte)0x06 };
-                Gen2.Select tidFilter = new Gen2.Select(false, Gen2.Bank.TID, 0, 32, tidmask);
-                tidFilter.target = Gen2.Select.Target.Select;
-                tidFilter.action = Gen2.Select.Action.ON_N_OFF;
-
-                //byte[] epcmask = new byte[] { (byte)0x1B, (byte)0x24 };
-                //Gen2.Select epcFilter = new Gen2.Select(false, Gen2.Bank.EPC, 32, 16, epcmask);
-                //epcFilter.target = Gen2.Select.Target.Select;
-                //epcFilter.action = Gen2.Select.Action.ON_N_OFF;
-
-                // create and initialize Filter1 传感数据随EPC数据返回
-                // This select filter matches all Gen2 tags where bits 32 to 48 of the EPC memory are 0x1008
-                Gen2.Select filter1 = new Gen2.Select(false, Gen2.Bank.EPC, 32, 16, new byte[] { (byte)0x10, (byte)0x08 });
-                filter1.target = Gen2.Select.Target.RFU3;
-                filter1.action = Gen2.Select.Action.OFF_N_ON;
-
-                // create and initialize Filter2
-                // This select filter matches all Gen2 tags where bits 32 to 48 of the EPC memory are 0x1008
-                Gen2.Select filter2 = new Gen2.Select(false, Gen2.Bank.EPC, 32, 16, new byte[] { (byte)0x10, (byte)0x08 });
-                filter2.target = Gen2.Select.Target.Inventoried_S2;
-                filter2.action = Gen2.Select.Action.OFF_N_ON;
-
-                List<TagFilter> filterList = new List<TagFilter>();
-                filterList.Add(tidFilter);
-                filterList.Add(filter1);
-                filterList.Add(filter2);
-
-                // Initialize multifilter with tagFilter array containing list of filters
-                // In case of Network readers, ensure that bitLength is a multiple of 8.
-                MultiFilter multiFilter = new MultiFilter(filterList);
-
-                // To get the sensor data with every response, select should be sent with every Query.
-                // Enable the flag to send Select with every Query
-                objReader.ParamSet("/reader/gen2/sendSelect", true);
-                Console.WriteLine("****** ParamSet sendSelect");
-
-                // Time interval between successive selects(Selsense and normal select) must be at least 15ms.
-                // So, T4 must be set to 15ms
-                UInt32 t4Val = 15000;
-                objReader.ParamSet("/reader/gen2/t4", t4Val);
-                Console.WriteLine("****** ParamSet t4Val=" + t4Val);
-
-                TagOp readUsrOp = new Gen2.ReadData(Gen2.Bank.USER, 8, (byte)1);;
-                
-                objReader.ParamSet("/reader/read/plan", new SimpleReadPlan(antennaList, TagProtocol.GEN2, multiFilter, readUsrOp,1000));
-                //objReader.ParamSet("/reader/read/plan", new SimpleReadPlan(antennaList, TagProtocol.GEN2, null, 1000));
-                Console.WriteLine("****** ParamSet read plan");
-
-                //开始读温度数据
-                tagdb.tagdbIsJohar = true;
-
-                objReader.TagRead += PrintTagreads;
-                objReader.ReadException += new EventHandler<ReaderExceptionEventArgs>(r_ReadException);
-                // search for tags in the background
-                objReader.StartReading();
-                Console.WriteLine("****** startReading...");
+                if (johar_radiobutton.IsChecked == true && vbl_radiobutton.IsChecked == false)
+                {
+                    startReadJohar();
+                }
+                else if (johar_radiobutton.IsChecked == false && vbl_radiobutton.IsChecked == true)
+                {
+                    startReadVBL();
+                }
             }
             else if (temp_read_button.Content.Equals("Stop"))
             {
-                tagdb.tagdbIsJohar = false;
-
                 temp_read_button.Content = "Read";
-                objReader.StopReading();
-                objReader.TagRead -= PrintTagreads;
-                objReader.ReadException -= new EventHandler<ReaderExceptionEventArgs>(r_ReadException);
+                if (johar_radiobutton.IsChecked == true && vbl_radiobutton.IsChecked == false)
+                {
+                    stopReadJohar();
+                }
+                else if (johar_radiobutton.IsChecked == false && vbl_radiobutton.IsChecked == true)
+                {
+                    stopReadVBL();
+                }
             }
+        }
+
+        private void stopReadVBL()
+        {
+            isStartRead = false;
+            tagdb.tagdbIsJohar = false;
+            tagdb.tagdbIsVBL = false;
+            tagdb.tagdbIsVBL_Tune = false;
+            tagdb.tagdbIsVBL_NValue = false;
+
+            IsCountChange = false;
+            isReadingTune = false;
+            isReadingNValue = false;
+
+            StopReading();
+
+            objReader.ParamSet("/reader/gen2/target", originalTarget);
+        }
+
+        private void startReadVBL()
+        {
+            isStartRead = true;
+
+            tagdb.tagdbIsJohar = false;
+            tagdb.tagdbIsVBL = true;
+
+            originalTarget = (Gen2.Target)objReader.ParamGet("/reader/gen2/target");
+            objReader.ParamSet("/reader/gen2/target", Gen2.Target.AB);
+            Console.WriteLine("### set target to AB success");
+
+            StartReading();
+        }
+
+        private void stopReadJohar()
+        {
+            tagdb.tagdbIsJohar = false;
+            objReader.StopReading();
+            objReader.TagRead -= PrintTagreads;
+            objReader.ReadException -= new EventHandler<ReaderExceptionEventArgs>(r_ReadException);
+        }
+
+        private void startReadJohar()
+        {
+            foreach (int ant in antennaList)
+            {
+                objReader.ParamSet("/reader/tagop/antenna", ant);
+                Console.WriteLine("Johar set antenna " + ant);
+            }
+            //Johar: ClsId + VendorId + ModelId = E2 035 016
+            //2A54	E2 03 51 06 05 00 96 10 2A 54 00 00 00 00 00 00	
+            byte[] tidmask = new byte[] { (byte)0xE2, (byte)0x03, (byte)0x51, (byte)0x06 };
+            Gen2.Select tidFilter = new Gen2.Select(false, Gen2.Bank.TID, 0, 32, tidmask);
+            tidFilter.target = Gen2.Select.Target.Select;
+            tidFilter.action = Gen2.Select.Action.ON_N_OFF;
+
+            //byte[] epcmask = new byte[] { (byte)0x1B, (byte)0x24 };
+            //Gen2.Select epcFilter = new Gen2.Select(false, Gen2.Bank.EPC, 32, 16, epcmask);
+            //epcFilter.target = Gen2.Select.Target.Select;
+            //epcFilter.action = Gen2.Select.Action.ON_N_OFF;
+
+            // create and initialize Filter1 传感数据随EPC数据返回
+            // This select filter matches all Gen2 tags where bits 32 to 48 of the EPC memory are 0x1008
+            Gen2.Select filter1 = new Gen2.Select(false, Gen2.Bank.EPC, 32, 16, new byte[] { (byte)0x10, (byte)0x08 });
+            filter1.target = Gen2.Select.Target.RFU3;
+            filter1.action = Gen2.Select.Action.OFF_N_ON;
+
+            // create and initialize Filter2
+            // This select filter matches all Gen2 tags where bits 32 to 48 of the EPC memory are 0x1008
+            Gen2.Select filter2 = new Gen2.Select(false, Gen2.Bank.EPC, 32, 16, new byte[] { (byte)0x10, (byte)0x08 });
+            filter2.target = Gen2.Select.Target.Inventoried_S2;
+            filter2.action = Gen2.Select.Action.OFF_N_ON;
+
+            List<TagFilter> filterList = new List<TagFilter>();
+            filterList.Add(tidFilter);
+            filterList.Add(filter1);
+            filterList.Add(filter2);
+
+            // Initialize multifilter with tagFilter array containing list of filters
+            // In case of Network readers, ensure that bitLength is a multiple of 8.
+            MultiFilter multiFilter = new MultiFilter(filterList);
+
+            // To get the sensor data with every response, select should be sent with every Query.
+            // Enable the flag to send Select with every Query
+            objReader.ParamSet("/reader/gen2/sendSelect", true);
+            Console.WriteLine("****** ParamSet sendSelect");
+
+            // Time interval between successive selects(Selsense and normal select) must be at least 15ms.
+            // So, T4 must be set to 15ms
+            UInt32 t4Val = 15000;
+            objReader.ParamSet("/reader/gen2/t4", t4Val);
+            Console.WriteLine("****** ParamSet t4Val=" + t4Val);
+
+            TagOp readUsrOp = new Gen2.ReadData(Gen2.Bank.USER, 8, (byte)1); ;
+
+            objReader.ParamSet("/reader/read/plan", new SimpleReadPlan(antennaList, TagProtocol.GEN2, multiFilter, readUsrOp, 1000));
+            //objReader.ParamSet("/reader/read/plan", new SimpleReadPlan(antennaList, TagProtocol.GEN2, null, 1000));
+            Console.WriteLine("****** ParamSet read plan");
+
+            //开始读温度数据
+            tagdb.tagdbIsJohar = true;
+
+            objReader.TagRead += PrintTagreads;
+            objReader.ReadException += new EventHandler<ReaderExceptionEventArgs>(r_ReadException);
+            // search for tags in the background
+            objReader.StartReading();
+            Console.WriteLine("****** startReading...");
         }
 
         private void r_ReadException(object sender, ReaderExceptionEventArgs e)
@@ -413,42 +471,6 @@ namespace ThingMagic.URA2.UI.UserControls
                 unique_sensortags_count.Content = "0";
                 total_sensortags_read_count.Content = "0";
             }));
-        }
-      
-        private void Test_button_Click(object sender, RoutedEventArgs e)
-        {
-            if(test_button.Content.Equals("Test"))
-            {
-                isStartRead = true;
-                test_button.Content = "Testing";
-
-                tagdb.tagdbIsJohar = false;
-                tagdb.tagdbIsVBL = true;
-
-                originalTarget = (Gen2.Target)objReader.ParamGet("/reader/gen2/target");
-                objReader.ParamSet("/reader/gen2/target", Gen2.Target.AB);
-                Console.WriteLine("### set target to AB success");
-                
-                StartReading();
-            }
-            else if (test_button.Content.Equals("Testing"))
-            {
-                isStartRead = false;
-                test_button.Content = "Stopping ...";
-                tagdb.tagdbIsJohar = false;
-                tagdb.tagdbIsVBL = false;
-                tagdb.tagdbIsVBL_Tune = false;
-                tagdb.tagdbIsVBL_NValue = false;
-
-                IsCountChange = false;
-                isReadingTune = false;
-                isReadingNValue = false;
-
-                StopReading();
-
-                objReader.ParamSet("/reader/gen2/target", originalTarget);
-                test_button.Content = "Test";
-            }
         }
 
         void PrintTagReadHandler(Object sender, TagReadDataEventArgs e)
@@ -520,8 +542,14 @@ namespace ThingMagic.URA2.UI.UserControls
             string name = Thread.CurrentThread.Name;
             Console.WriteLine("----> [" + _threadID + "] " + name);
 
-            int[] ants = new int[] { 1 };
-            objReader.ParamSet("/reader/tagop/antenna", ants[0]);
+            foreach(int ant in antennaList)
+            {
+                objReader.ParamSet("/reader/tagop/antenna", ant);
+                Console.WriteLine("VBL set antenna " + ant);
+            }
+
+            //int[] ants = new int[] { 1 };
+            //objReader.ParamSet("/reader/tagop/antenna", ants[0]);
             int readTime = (int)objReader.ParamGet("/reader/read/asyncOnTime");
             Console.WriteLine("############# readTime=" + readTime);
             
@@ -529,13 +557,13 @@ namespace ThingMagic.URA2.UI.UserControls
             byte[] tid_mask = new byte[] { 0xE2, 0xC1, 0x9c, 0xB1 };
             TagFilter target = new Gen2.Select(false, Gen2.Bank.TID, 0, 32, tid_mask);
             
-            ReadPlan plan0 = new SimpleReadPlan(ants, TagProtocol.GEN2, target, null, false, 1000);
+            ReadPlan plan0 = new SimpleReadPlan(antennaList, TagProtocol.GEN2, target, null, false, 1000);
 
             TagOp tagOp1 = new Gen2.ReadData(Gen2.Bank.USER, 31, 1);
-            ReadPlan plan1 = new SimpleReadPlan(ants, TagProtocol.GEN2, target, tagOp1, false, 1000);
+            ReadPlan plan1 = new SimpleReadPlan(antennaList, TagProtocol.GEN2, target, tagOp1, false, 1000);
 
             TagOp tagOp2 = new Gen2.ReadData(Gen2.Bank.RESERVED, 8, 1);
-            ReadPlan plan2 = new SimpleReadPlan(ants, TagProtocol.GEN2, target, tagOp2, false, 1000);
+            ReadPlan plan2 = new SimpleReadPlan(antennaList, TagProtocol.GEN2, target, tagOp2, false, 1000);
             
             objReader.TagRead += PrintTagreads;
             objReader.ReadException += new EventHandler<ReaderExceptionEventArgs>(r_ReadException);
