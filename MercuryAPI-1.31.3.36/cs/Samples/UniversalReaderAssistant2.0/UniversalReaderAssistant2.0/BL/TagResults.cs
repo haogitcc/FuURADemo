@@ -281,7 +281,8 @@ namespace ThingMagic.URA2.BL
                 double temperature = 11984.47 / (21.25 + D1 + (D2 / 2752) + delta2) - 301.57;
                 Console.WriteLine("temperature=" + temperature);
                 Console.WriteLine();
-                temp = temperature;
+                //temp = temperature;
+                temp = Math.Round(temperature, 2);//保留两位小数
             }
             return temp;
         }
@@ -301,7 +302,9 @@ namespace ThingMagic.URA2.BL
                     //Console.WriteLine(mergeData.EpcString + " ,Tune=" + Tune + ", old_NValue=" + old_NValue + ", NValue=" + NValue);
                     tune = parseVBLTune(Tune);
                     nvalue = parseVBLNValue(old_NValue);
-                    temp = (nvalue + tune - 500) / 5.4817 + 24.9;
+                    double temperature = (nvalue + tune - 500) / 5.4817 + 24.9;
+                    //temp = temperature;
+                    temp = Math.Round(temperature, 2);//保留两位小数
                 }
             }
             old_NValue = NValue;
