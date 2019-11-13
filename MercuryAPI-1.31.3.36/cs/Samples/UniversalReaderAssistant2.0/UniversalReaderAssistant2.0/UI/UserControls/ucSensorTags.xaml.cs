@@ -48,15 +48,25 @@ namespace ThingMagic.URA2.UI.UserControls
             Console.WriteLine("### init ucSensorTags");
             InitializeComponent();
 
-            //Johar
+            //Johar E2 035 106
             class_id_combo.Items.Add("E2");
             vendor_id_combo.Items.Add("035");
             model_id_combo.Items.Add("106");
 
-            //Fudan
+            //Fudan E2 827 001
             //class_id_combo.Items.Add("E2");
             vendor_id_combo.Items.Add("827");
             model_id_combo.Items.Add("001");
+
+            //VBL E2 C19 CB1
+            //class_id_combo.Items.Add("E2");
+            vendor_id_combo.Items.Add("C19");
+            model_id_combo.Items.Add("CB1");
+
+            //iLian 32 14E 0B0
+            class_id_combo.Items.Add("32");
+            vendor_id_combo.Items.Add("14E");
+            model_id_combo.Items.Add("0B0");
 
             class_id_combo.SelectedIndex = 0;
             vendor_id_combo.SelectedIndex = 0;
@@ -250,63 +260,107 @@ namespace ThingMagic.URA2.UI.UserControls
             ContextMenu ctMenu = (ContextMenu)App.Current.MainWindow.FindName("ctMenu");
             ctMenu.Visibility = System.Windows.Visibility.Collapsed;
         }
-
-        private void Class_id_combo_SelectionChanged(object sender, SelectionChangedEventArgs e)
-        {
-            Console.WriteLine("### class_id_textbox");
-            class_id_textbox.Text = class_id_combo.SelectedValue.ToString();
-        }
-
-        private void Vendor_id_combo_SelectionChanged(object sender, SelectionChangedEventArgs e)
-        {
-            Console.WriteLine("### vendor_id_textbox");
-            vendor_id_textbox.Text = vendor_id_combo.SelectedValue.ToString();
-        }
-
-        private void Model_id_combo_SelectionChanged(object sender, SelectionChangedEventArgs e)
-        {
-            Console.WriteLine("### model_id_textbox");
-            model_id_textbox.Text = model_id_combo.SelectedValue.ToString();
-        }
-
+        
         private void Temp_read_button_Click(object sender, RoutedEventArgs e)
         {
             if (temp_read_button.Content.Equals("Read"))
             {
-                if(antennaList.Count == 0)
+                sensortag_groupbox.IsEnabled = false;
+                sensortag_tid_gropbox.IsEnabled = false;
+                if (antennaList.Count == 0)
                 {
                     MessageBox.Show("Please Select TagOp antenna", "No Antenna Selected", MessageBoxButton.OK, MessageBoxImage.Error);
                     return;
                 }
                 temp_read_button.Content = "Stop";
-                if (johar_radiobutton.IsChecked == true && vbl_radiobutton.IsChecked == false)
+                if (johar_radiobutton.IsChecked == true && vbl_radiobutton.IsChecked == false && ilian_radiobutton.IsChecked == false)
                 {
                     startReadJohar();
                 }
-                else if (johar_radiobutton.IsChecked == false && vbl_radiobutton.IsChecked == true)
+                else if (johar_radiobutton.IsChecked == false && vbl_radiobutton.IsChecked == true && ilian_radiobutton.IsChecked == false)
                 {
                     startReadVBL();
+                }
+                else if (johar_radiobutton.IsChecked == false && vbl_radiobutton.IsChecked == false && ilian_radiobutton.IsChecked == true)
+                {
+                    startReadILian();
                 }
             }
             else if (temp_read_button.Content.Equals("Stop"))
             {
+                sensortag_groupbox.IsEnabled = true;
+                sensortag_tid_gropbox.IsEnabled = true;
                 temp_read_button.Content = "Read";
-                if (johar_radiobutton.IsChecked == true && vbl_radiobutton.IsChecked == false)
+                if (johar_radiobutton.IsChecked == true && vbl_radiobutton.IsChecked == false && ilian_radiobutton.IsChecked == false)
                 {
                     stopReadJohar();
                 }
-                else if (johar_radiobutton.IsChecked == false && vbl_radiobutton.IsChecked == true)
+                else if (johar_radiobutton.IsChecked == false && vbl_radiobutton.IsChecked == true && ilian_radiobutton.IsChecked == false)
                 {
                     stopReadVBL();
                 }
+                else if (johar_radiobutton.IsChecked == false && vbl_radiobutton.IsChecked == false && ilian_radiobutton.IsChecked == true)
+                {
+                    stopReadILian();
+                }
             }
+        }
+
+        private void stopReadILian()
+        {
+            tagdb.tagdbIsJohar = false;
+            tagdb.tagdbIsVBL = false;
+            tagdb.tagdbIsILian = false;
+
+            objReader.StopReading();
+            objReader.TagRead -= PrintTagreads;
+            objReader.ReadException -= new EventHandler<ReaderExceptionEventArgs>(r_ReadException);
+            objReader.ParamSet("/reader/gen2/target", originalTarget);
+        }
+
+        private void startReadILian()
+        {
+            tagdb.tagdbIsJohar = false;
+            tagdb.tagdbIsVBL = false;
+            tagdb.tagdbIsILian = true;
+
+            foreach (int ant in antennaList)
+            {
+                objReader.ParamSet("/reader/tagop/antenna", ant);
+                Console.WriteLine("iLian set antenna " + ant);
+            }
+
+            originalTarget = (Gen2.Target)objReader.ParamGet("/reader/gen2/target");
+            objReader.ParamSet("/reader/gen2/target", Gen2.Target.AB);
+            Console.WriteLine("### iLian set target to AB success");
+
+            //iLian: ClsId + VendorId + ModelId = 32 14E 0B0
+            byte[] tidmask = new byte[] { (byte)0x32, (byte)0x14, (byte)0xE0, (byte)0xB0 };
+            Gen2.Select tidFilter = new Gen2.Select(false, Gen2.Bank.TID, 0, (byte)(tidmask.Length * 8), tidmask);
+            
+
+            TagOp readUsrOp = new Gen2.ReadData(Gen2.Bank.USER, 0x7F, (byte)1); ;
+
+            objReader.ParamSet("/reader/read/plan", new SimpleReadPlan(antennaList, TagProtocol.GEN2, tidFilter, readUsrOp, 1000));
+            //objReader.ParamSet("/reader/read/plan", new SimpleReadPlan(antennaList, TagProtocol.GEN2, null, 1000));
+            Console.WriteLine("****** ParamSet read plan");
+
+            //开始读温度数据
+            objReader.TagRead += PrintTagreads;
+            objReader.ReadException += new EventHandler<ReaderExceptionEventArgs>(r_ReadException);
+            // search for tags in the background
+            objReader.StartReading();
+            Console.WriteLine("****** startReading...");
         }
 
         private void stopReadVBL()
         {
             isStartRead = false;
+
             tagdb.tagdbIsJohar = false;
             tagdb.tagdbIsVBL = false;
+            tagdb.tagdbIsILian = false;
+
             tagdb.tagdbIsVBL_Tune = false;
             tagdb.tagdbIsVBL_NValue = false;
 
@@ -325,6 +379,7 @@ namespace ThingMagic.URA2.UI.UserControls
 
             tagdb.tagdbIsJohar = false;
             tagdb.tagdbIsVBL = true;
+            tagdb.tagdbIsILian = false;
 
             originalTarget = (Gen2.Target)objReader.ParamGet("/reader/gen2/target");
             objReader.ParamSet("/reader/gen2/target", Gen2.Target.AB);
@@ -336,6 +391,9 @@ namespace ThingMagic.URA2.UI.UserControls
         private void stopReadJohar()
         {
             tagdb.tagdbIsJohar = false;
+            tagdb.tagdbIsVBL = false;
+            tagdb.tagdbIsILian = false;
+
             objReader.StopReading();
             objReader.TagRead -= PrintTagreads;
             objReader.ReadException -= new EventHandler<ReaderExceptionEventArgs>(r_ReadException);
@@ -343,6 +401,9 @@ namespace ThingMagic.URA2.UI.UserControls
 
         private void startReadJohar()
         {
+            tagdb.tagdbIsJohar = true;
+            tagdb.tagdbIsVBL = false;
+            tagdb.tagdbIsILian = false;
             foreach (int ant in antennaList)
             {
                 objReader.ParamSet("/reader/tagop/antenna", ant);
@@ -399,8 +460,6 @@ namespace ThingMagic.URA2.UI.UserControls
             Console.WriteLine("****** ParamSet read plan");
 
             //开始读温度数据
-            tagdb.tagdbIsJohar = true;
-
             objReader.TagRead += PrintTagreads;
             objReader.ReadException += new EventHandler<ReaderExceptionEventArgs>(r_ReadException);
             // search for tags in the background
@@ -843,5 +902,56 @@ namespace ThingMagic.URA2.UI.UserControls
                 Console.WriteLine("Unsupported read plan: " + rp.GetType().ToString());
         }
         #endregion
+
+        private void Johar_radiobutton_Click(object sender, RoutedEventArgs e)
+        {
+            SensortagChange();
+        }
+        
+        private void Ilian_radiobutton_Click(object sender, RoutedEventArgs e)
+        {
+            SensortagChange();
+        }
+
+        private void Vbl_radiobutton_Click(object sender, RoutedEventArgs e)
+        {
+            SensortagChange();
+        }
+
+        private void SensortagChange()
+        {
+            //Fudan E2 827 001
+            if (johar_radiobutton.IsChecked == true)
+            {
+                Dispatcher.BeginInvoke(new ThreadStart(delegate ()
+                {
+                    //Johar E2 035 106
+                    class_id_combo.SelectedValue = "E2";
+                    vendor_id_combo.SelectedValue = "035";
+                    model_id_combo.SelectedValue = "106";
+                }));
+            }
+            else if(vbl_radiobutton.IsChecked == true)
+            {
+                Dispatcher.BeginInvoke(new ThreadStart(delegate ()
+                {
+                    //VBL E2 C19 CB1
+                    class_id_combo.SelectedValue = "E2";
+                    vendor_id_combo.SelectedValue = "C19";
+                    model_id_combo.SelectedValue = "CB1";
+                }));
+            }
+            else if(ilian_radiobutton.IsChecked == true)
+            {
+                Dispatcher.BeginInvoke(new ThreadStart(delegate ()
+                {
+                    //iLian 32 14E 0B0
+                    class_id_combo.SelectedValue = "32";
+                    vendor_id_combo.SelectedValue = "14E";
+                    model_id_combo.SelectedValue = "0B0";
+                }));
+            }
+        }
+
     }
 }

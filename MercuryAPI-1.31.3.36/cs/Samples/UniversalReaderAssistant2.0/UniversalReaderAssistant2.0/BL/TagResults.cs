@@ -26,6 +26,7 @@ namespace ThingMagic.URA2.BL
         protected bool isVBL = false;
         protected bool isVBL_Tune = false;
         protected bool isVBL_NValue = false;
+        protected bool isILian = false;
 
         public TagReadRecord(TagReadData newData)
         {
@@ -58,7 +59,9 @@ namespace ThingMagic.URA2.BL
             //Console.WriteLine("Update isJohar=" + isJohar);
             if (isJohar)
             {
-                temperature = getJoharTemp(mergeData);
+                double temp = getJoharTemp(mergeData);
+                if (temp != UNSPECTTEMP)
+                    temperature = temp;
             }
             else if(isVBL)
             {
@@ -78,10 +81,16 @@ namespace ThingMagic.URA2.BL
                     }
                 }
             }
+            else if (isILian)
+            {
+                double temp = getILianTemp(mergeData);
+                if (temp != UNSPECTTEMP)
+                    temperature = temp; 
+            }
 
             OnPropertyChanged(null);
         }
-
+        
         public UInt32 SerialNumber
         {
             get { return serialNo; }
@@ -247,10 +256,36 @@ namespace ThingMagic.URA2.BL
                 temperature = value;
             }
         }
-        
+
+        private double getILianTemp(TagReadData RawRead)
+        {
+            //Console.WriteLine("### getILianTemp");
+            double temp = UNSPECTTEMP;
+            if (RawRead.Data.Length > 0)
+            {
+                double temperature = 0;
+                byte[] bdata = RawRead.Data;
+                string sdata = ByteFormat.ToHex(bdata, "", "");
+                if (sdata.Trim().Equals("0000"))
+                {
+                    return 0;
+                }
+                Console.WriteLine("sdata={0} {1} {2}", sdata, sdata.Substring(0, 2), sdata.Substring(2, 2));
+                int t1 = Convert.ToInt32(sdata.Substring(0, 2), 16);
+                int t2 = Convert.ToInt32(sdata.Substring(2, 2), 16);
+                temperature = (t1 - 30) + (t2/(double)256);
+                Console.WriteLine("t1={0}, t2={1}", t1-30, t2/ (double)256);
+                Console.WriteLine("temperature=" + temperature);
+                Console.WriteLine();
+                //temp = temperature;
+                temp = Math.Round(temperature, 2);//保留两位小数
+            }
+            return temp;
+        }
+
         private double getJoharTemp(TagReadData RawRead)
         {
-            double temp = 0.0;
+            double temp = UNSPECTTEMP;
             if (RawRead.Data.Length > 0)
             {
                 //Console.WriteLine(ByteFormat.ToHex(RawRead.Data, "", " "));
@@ -381,6 +416,15 @@ namespace ThingMagic.URA2.BL
             set
             {
                 isVBL_NValue = value;
+            }
+        }
+
+        public bool IsILian
+        {
+            get { return isILian; }
+            set
+            {
+                isILian = value;
             }
         }
 
@@ -600,6 +644,8 @@ namespace ThingMagic.URA2.BL
         public bool tagdbIsVBL_Tune { get;  set; }
         public bool tagdbIsVBL_NValue { get;  set; }
 
+        public bool tagdbIsILian { get; set; }
+
         public void Clear()
         {
             EpcIndex.Clear();
@@ -621,7 +667,7 @@ namespace ThingMagic.URA2.BL
                     key = addData.EpcString.Substring(0, 4);
                     //Console.WriteLine("*** tagdb add key=" + key);
                 }
-                else if (tagdbIsVBL)
+                else if (tagdbIsVBL || tagdbIsILian)
                 {
                     key = addData.EpcString; //if only keying on EPCID
                 }
@@ -696,6 +742,10 @@ namespace ThingMagic.URA2.BL
                             value.IsVBL_Tune = false;
                             value.IsVBL_NValue = true;
                         }
+                    }
+                    else if (tagdbIsILian)
+                    {
+                        value.IsILian = true;
                     }
 
                     //Console.WriteLine("### gpio=" + value.GPIO);

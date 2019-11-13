@@ -11,33 +11,39 @@
     </UserControl.Resources>
     <Grid>
         <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="640"/>
+            <ColumnDefinition Width="Auto"/>
             <ColumnDefinition Width="Auto"/>
             <ColumnDefinition Width="*"/>
         </Grid.ColumnDefinitions>
         <Grid.RowDefinitions>
-            <RowDefinition Height="48"/>
-            <RowDefinition Height="*"/>
+            <RowDefinition Height="55"/>
+            <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
-        <StackPanel Orientation="Horizontal" Grid.Row="0" Grid.ColumnSpan="3">
+        <StackPanel Orientation="Horizontal" Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="3">
             <Button Name="temp_read_button" Content="Read" Width="75" Margin="5" Click="Temp_read_button_Click"/>
             <Button Name="temp_clear_button" Content="Clear" Width="75" Margin="5" Click="Temp_clear_button_Click"/>
-            <StackPanel Orientation="Vertical" Margin="4" MinWidth="120">
-                <RadioButton x:Name="johar_radiobutton" Content="Johar" Margin="2"/>
-                <RadioButton x:Name="vbl_radiobutton" Content="VBL" Margin="2"/>
-            </StackPanel>
+            <GroupBox x:Name="sensortag_groupbox" Background="White" BorderThickness="2" BorderBrush="Black" VerticalAlignment="Center">
+                <StackPanel Orientation="Horizontal" >
+                    <StackPanel Orientation="Vertical" Margin="4" MinWidth="60">
+                        <RadioButton x:Name="johar_radiobutton" Content="Johar" Margin="1" GroupName="sensortags" Click="Johar_radiobutton_Click"/>
+                        <RadioButton x:Name="vbl_radiobutton" Content="VBL" Margin="1" GroupName="sensortags" Click="Vbl_radiobutton_Click"/>
+                    </StackPanel>
+                    <StackPanel Orientation="Vertical" Margin="4" MinWidth="60">
+                        <RadioButton x:Name="ilian_radiobutton" Content="iLian" Margin="1" GroupName="sensortags" Click="Ilian_radiobutton_Click"/>
+                    </StackPanel>
+                </StackPanel>
+            </GroupBox>
             <Label x:Name="sensortags_readingstatus_label" Content="none" MinWidth="120" Margin="5"/>
         </StackPanel>
-        <GroupBox Background="White" Grid.Row="1" Grid.ColumnSpan="1">
+       
+        <GroupBox x:Name="sensortag_tid_gropbox" Background="White" Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="3" IsEnabled="False">
             <GroupBox.Header>
                 <TextBlock FontWeight="Bold">TID</TextBlock>
             </GroupBox.Header>
             <Grid Width="Auto" >
                 <Grid.RowDefinitions>
                     <RowDefinition Height="25" />
-                    <RowDefinition Height="35" />
-                    <RowDefinition Height="35" />
                     <RowDefinition Height="35" />
                     <RowDefinition Height="*" />
                 </Grid.RowDefinitions>
@@ -46,35 +52,24 @@
                     <ColumnDefinition Width="Auto" />
                     <ColumnDefinition Width="Auto" />
                     <ColumnDefinition Width="Auto" />
-                    <ColumnDefinition Width="Auto" />
                 </Grid.ColumnDefinitions>
 
                 <Label Grid.Row="0" Grid.Column="0" Content="Purpose :" Width="95"/>
                 <Label Grid.Row="1" Grid.Column="0" Content="combo (Hex) :" Width="95"/>
-                <Label Grid.Row="2" Grid.Column="0" Content="Value (Hex) :" Width="95"/>
-                <Label Grid.Row="3" Grid.Column="0" Content="Meaning :" Width="95"/>
 
                 <Label Grid.Row="0" Grid.Column="1" Content="ClsID" Width="45"/>
-                <ComboBox Name="class_id_combo" Grid.Row="1" Grid.Column="1" Margin="3" SelectionChanged="Class_id_combo_SelectionChanged"/>
-                <TextBox Name="class_id_textbox" Grid.Row="2" Grid.Column="1" Margin="3"/>
-                
-                <Label Grid.Row="0" Grid.Column="2" Content="Vendor ID"/>
-                <ComboBox Name="vendor_id_combo" Grid.Row="1" Grid.Column="2" Margin="3" Width="85" SelectionChanged="Vendor_id_combo_SelectionChanged" RenderTransformOrigin="0.501,0.507"/>
-                <TextBox Name="vendor_id_textbox" Grid.Row="2" Grid.Column="2" Margin="3" Width="85"/>
-                <TextBox Grid.Row="3" Grid.Column="2" Margin="3" Width="85"/>
-                
-                <Label Grid.Row="0" Grid.Column="3" Content="Model ID"/>
-                <ComboBox Name="model_id_combo" Grid.Row="1" Grid.Column="3" Margin="3" Width="101" SelectionChanged="Model_id_combo_SelectionChanged"/>
-                <TextBox Name="model_id_textbox" Grid.Row="2" Grid.Column="3" Margin="3" Width="101"/>
-                <TextBox Grid.Row="3" Grid.Column="3" Margin="3" Width="101"/>
+                <ComboBox Name="class_id_combo" Grid.Row="1" Grid.Column="1" Margin="3" />
 
-                <Label Grid.Row="0" Grid.Column="4" Content="Unique ID" Width="280"/>
-                <TextBox Name="unique_id_textbox" Grid.Row="2" Grid.Column="4" Margin="3" />
-                
+                <Label Grid.Row="0" Grid.Column="2" Content="Vendor ID"/>
+                <ComboBox Name="vendor_id_combo" Grid.Row="1" Grid.Column="2" Margin="3" Width="85" RenderTransformOrigin="0.501,0.507"/>
+
+                <Label Grid.Row="0" Grid.Column="3" Content="Model ID"/>
+                <ComboBox Name="model_id_combo" Grid.Row="1" Grid.Column="3" Margin="3" Width="101"/>
+
             </Grid>
         </GroupBox>
 
-        <GroupBox Background="White" Grid.Row="1" Grid.Column="2"  Grid.RowSpan="2" BorderBrush="Black" BorderThickness="3">
+        <GroupBox Background="White" Grid.Row="2" Grid.Column="0"  Grid.RowSpan="3" BorderBrush="Black" BorderThickness="3">
             <GroupBox.Header>
                 <TextBlock FontWeight="Bold"> EPC </TextBlock>
             </GroupBox.Header>

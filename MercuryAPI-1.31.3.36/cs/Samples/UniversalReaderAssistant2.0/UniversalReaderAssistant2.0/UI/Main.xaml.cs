@@ -16323,6 +16323,5 @@ namespace ThingMagic.URA2
                 return true;
             }
         }
-
     }
 }
