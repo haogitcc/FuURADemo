@@ -50,6 +50,7 @@ namespace ThingMagic.URA2
     public partial class Main : Window
     {
         #region Fields
+        private int FuwitType = 0;
         /// <summary>
         /// This flag is used to synchronize all "reader disconnection" exception messages
         /// </summary>
@@ -545,6 +546,7 @@ namespace ThingMagic.URA2
         /// <param name="txtRecord"></param>
         public void ServiceResolved(DNSSDService sref, DNSSDFlags flags, uint ifIndex, String fullName, String hostName, ushort port, TXTRecord txtRecord)
         {
+            Console.WriteLine(string.Format("ServiceResolved ########### {0} {1}:{2}", fullName, hostName, port));
             //cmbReaderAddr.Items.Add(hostName);
             ResolveData data = new ResolveData();
 
@@ -567,6 +569,22 @@ namespace ThingMagic.URA2
                 object ip = txtRecord.GetValueForKey("WLanIP");
                 bits = BitConverter.ToUInt32((Byte[])ip, 0);
                 address = new System.Net.IPAddress(bits).ToString();
+            }
+
+            if (txtRecord.ContainsKey("FuLanIP"))
+            {
+                object ip = txtRecord.GetValueForKey("FuLanIP");
+                address = System.Text.Encoding.ASCII.GetString((byte[])ip);
+            }
+            if (txtRecord.ContainsKey("FuWLanIP"))
+            {
+                object ip = txtRecord.GetValueForKey("FuWLanIP");
+                address = System.Text.Encoding.ASCII.GetString((byte[])ip);
+            }
+            if (txtRecord.ContainsKey("IsFuwit"))
+            {
+                object type = txtRecord.GetValueForKey("IsFuwit");
+                FuwitType = Convert.ToInt32(System.Text.Encoding.ASCII.GetString((byte[])type));
             }
 
             //Adding host name
@@ -2849,6 +2867,26 @@ namespace ThingMagic.URA2
             catch (Exception ex) { Onlog(ex); }
             try
             {
+                if (FuwitType > 0)
+                {
+                    if((bool)rdbtnNetworkConnection.IsChecked)
+                    {
+                        string key = HostNameIpAddress.Keys.Where(x => x.Contains(cmbFixedReaderAddr.Text)).FirstOrDefault();
+                        string readerUri;
+                        if (string.IsNullOrWhiteSpace(key) || key == null)
+                            readerUri = cmbFixedReaderAddr.Text;
+                        else
+                            readerUri = HostNameIpAddress[key];
+                        MatchCollection mc = Regex.Matches(readerUri, @"(?<=\().+?(?=\))");
+                        foreach (Match m in mc)
+                        {
+                            readerUri = m.ToString();
+                        }
+                        txtCustomTransport.Text = string.Format("{0}:8086", readerUri);
+                        rdbtnCustomTrasnportConnection.IsChecked = true;
+                    }
+                }
+
                 if ((bool)rdbtnLocalConnection.IsChecked)
                 {
                     if (!ValidatePortNumber(cmbReaderAddr.Text))
@@ -15828,6 +15866,7 @@ namespace ThingMagic.URA2
         protected bool _exitNow = false;
         private ManualResetEvent waitUntilReadMethodCalled = new ManualResetEvent(false);
         int gpi_timeout = 250;
+
         private void StartReading_gpi_button_Click(object sender, RoutedEventArgs e)
         {
             if (startReading_gpi_button.Content.Equals(FindResource("Start GPI").ToString()))
