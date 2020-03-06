@@ -297,6 +297,8 @@ namespace ThingMagic.URA2.BL
 
                 //2A54 0000 0000 0000 F70B F045
                 byte[] bepc = RawRead.Tag.EpcBytes;
+                if (bepc.Count() < 11)
+                    return 0;
                 byte[] s06 = new byte[] { bepc[8], bepc[9] };
                 byte[] s07 = new byte[] { bepc[10], bepc[11] };
                 //Console.WriteLine("s06=" + ByteFormat.ToHex(s06, "", ""));
