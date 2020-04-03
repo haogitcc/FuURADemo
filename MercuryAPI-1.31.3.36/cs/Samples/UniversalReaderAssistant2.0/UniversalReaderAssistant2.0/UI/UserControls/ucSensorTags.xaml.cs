@@ -48,29 +48,18 @@ namespace ThingMagic.URA2.UI.UserControls
             Console.WriteLine("### init ucSensorTags");
             InitializeComponent();
 
-            //Johar E2 035 106
-            class_id_combo.Items.Add("E2");
-            vendor_id_combo.Items.Add("035");
-            model_id_combo.Items.Add("106");
+            List<CategoryInfo> categoryList = new List<CategoryInfo>();
+            sensortag_combobox.ItemsSource = categoryList;
+            //这里的Name和Value不能乱填哦
+            sensortag_combobox.DisplayMemberPath = "Name";//显示出来的值
+            sensortag_combobox.SelectedValuePath = "Value";//实际选中后获取的结果的值
 
-            //Fudan E2 827 001
-            //class_id_combo.Items.Add("E2");
-            vendor_id_combo.Items.Add("827");
-            model_id_combo.Items.Add("001");
+            categoryList.Add(new CategoryInfo { Name = "悦和", Value = "Johar" });
+            categoryList.Add(new CategoryInfo { Name = "VBL", Value = "VBL" });
+            categoryList.Add(new CategoryInfo { Name = "宜链", Value = "iLian" });
+            categoryList.Add(new CategoryInfo { Name = "RF Micro Magnus S3", Value = "rfMicro" });
 
-            //VBL E2 C19 CB1
-            //class_id_combo.Items.Add("E2");
-            vendor_id_combo.Items.Add("C19");
-            model_id_combo.Items.Add("CB1");
-
-            //iLian 32 14E 0B0
-            class_id_combo.Items.Add("32");
-            vendor_id_combo.Items.Add("14E");
-            model_id_combo.Items.Add("0B0");
-
-            class_id_combo.SelectedIndex = 0;
-            vendor_id_combo.SelectedIndex = 0;
-            model_id_combo.SelectedIndex = 0;
+            sensortag_combobox.SelectedIndex = 0;
 
             GenerateColmnsForDataGrid();
             this.DataContext = tagdb.TagList;
@@ -263,48 +252,193 @@ namespace ThingMagic.URA2.UI.UserControls
         
         private void Temp_read_button_Click(object sender, RoutedEventArgs e)
         {
+            string langName = sensortag_combobox.SelectedValue.ToString();
             if (temp_read_button.Content.Equals("Read"))
             {
-                sensortag_groupbox.IsEnabled = false;
                 sensortag_tid_gropbox.IsEnabled = false;
                 if (antennaList.Count == 0)
                 {
                     MessageBox.Show("Please Select TagOp antenna", "No Antenna Selected", MessageBoxButton.OK, MessageBoxImage.Error);
                     return;
                 }
+                sensortag_combobox.IsEnabled = false;
                 temp_read_button.Content = "Stop";
-                if (johar_radiobutton.IsChecked == true && vbl_radiobutton.IsChecked == false && ilian_radiobutton.IsChecked == false)
+                
+
+                if (langName.Equals("Johar"))
                 {
                     startReadJohar();
                 }
-                else if (johar_radiobutton.IsChecked == false && vbl_radiobutton.IsChecked == true && ilian_radiobutton.IsChecked == false)
+                else if (langName.Equals("VBL"))
                 {
                     startReadVBL();
                 }
-                else if (johar_radiobutton.IsChecked == false && vbl_radiobutton.IsChecked == false && ilian_radiobutton.IsChecked == true)
+                else if (langName.Equals("iLian"))
                 {
                     startReadILian();
+                }
+                else if (langName.Equals("rfMicro"))
+                {
+                    startReadRFMicro();
                 }
             }
             else if (temp_read_button.Content.Equals("Stop"))
             {
-                sensortag_groupbox.IsEnabled = true;
+                sensortag_combobox.IsEnabled = true;
                 sensortag_tid_gropbox.IsEnabled = true;
                 temp_read_button.Content = "Read";
-                if (johar_radiobutton.IsChecked == true && vbl_radiobutton.IsChecked == false && ilian_radiobutton.IsChecked == false)
+                if (langName.Equals("Johar"))
                 {
                     stopReadJohar();
                 }
-                else if (johar_radiobutton.IsChecked == false && vbl_radiobutton.IsChecked == true && ilian_radiobutton.IsChecked == false)
+                else if (langName.Equals("VBL"))
                 {
                     stopReadVBL();
                 }
-                else if (johar_radiobutton.IsChecked == false && vbl_radiobutton.IsChecked == false && ilian_radiobutton.IsChecked == true)
+                else if (langName.Equals("iLian"))
                 {
                     stopReadILian();
                 }
+                else if (langName.Equals("rfMicro"))
+                {
+                    stopReadRFMicro();
+                }
             }
         }
+        #region RF Micron Magnus-S3 Sensor Tag
+        private void stopReadRFMicro()
+        {
+            
+        }
+
+        private void startReadRFMicro()
+        {
+            int TEMP_CODE = 0;
+            //Read the Sensor Code 403h -> Reserved Ch
+            TagOp sensorCodeRead = new Gen2.ReadData(Gen2.Bank.RESERVED, 0xC, 1);
+            SimpleReadPlan readPlan = new SimpleReadPlan(antennaList, TagProtocol.GEN2, null, sensorCodeRead, true, 100);
+            objReader.ParamSet("/reader/read/plan", readPlan);
+
+            TagReadData[] sensorReadResults = objReader.Read(75);
+            foreach(TagReadData result in sensorReadResults)
+            {
+                string EPC = ByteFormat.ToHex(result.Epc, "", "");
+                string frequency = result.Frequency.ToString();
+                string sensorCode = ByteFormat.ToHex(result.Data, "", "");
+                Console.WriteLine(string.Format("EPC:{0}, Frequency(kHz): {1}, Sensor Code: {2}", EPC, frequency, sensorCode));
+            }
+
+            //Read the On-Chip RSSI Code 403h -> USER D0h, Reserved Dh
+            byte[] mask = { Convert.ToByte("1F", 16) };
+            Gen2.Select select = new Gen2.Select(false, Gen2.Bank.USER, 0xD0, 8, mask);
+            TagOp onChipRSSICodeRead = new Gen2.ReadData(Gen2.Bank.RESERVED, 0xD, 1);
+            readPlan = new SimpleReadPlan(antennaList, TagProtocol.GEN2, select, onChipRSSICodeRead, true, 100);
+            objReader.ParamSet("/reader/read/plan", readPlan);
+
+            TagReadData[] onChipRSSIReadResults = objReader.Read(75);
+            foreach (TagReadData result in onChipRSSIReadResults)
+            {
+                string EPC = ByteFormat.ToHex(result.Epc, "", "");
+                string frequency = result.Frequency.ToString();
+                string onChipRSSICode = ByteFormat.ToHex(result.Data, "", "");
+                Console.WriteLine(string.Format("EPC:{0}, Frequency(kHz): {1}, On-Chip RSSI: {2}", EPC, frequency, onChipRSSICode));
+            }
+
+            //Read the Temperature Code 403h -> USER E0h, Reserved Eh
+            select = new Gen2.Select(false, Gen2.Bank.USER, 0xE0, 0, new byte[0]);
+            TagOp temperatureCodeRead = new Gen2.ReadData(Gen2.Bank.RESERVED, 0xE, 1);
+            readPlan = new SimpleReadPlan(antennaList, TagProtocol.GEN2, select, temperatureCodeRead, true, 100);
+            objReader.ParamSet("/reader/read/plan", readPlan);
+
+            TagReadData[] TemperatureCodeReadResults = objReader.Read(75);
+            foreach (TagReadData result in TemperatureCodeReadResults)
+            {
+                string EPC = ByteFormat.ToHex(result.Epc, "", "");
+                string frequency = result.Frequency.ToString();
+                string TemperatureCode = ByteFormat.ToHex(result.Data, "", "");
+                Console.WriteLine(string.Format("EPC:{0}, Frequency(kHz): {1}, Temperature Code: {2}", EPC, frequency, TemperatureCode));
+                TEMP_CODE = Convert.ToInt32(TemperatureCode, 16) & 0x00000FFF;
+            }
+
+            //Calibrated Temperature Measurements
+            TagOp Calibrated = new Gen2.ReadData(Gen2.Bank.USER, 0x8, 4);
+            readPlan = new SimpleReadPlan(antennaList, TagProtocol.GEN2, select, Calibrated, true, 100);
+            objReader.ParamSet("/reader/read/plan", readPlan);
+
+            TagReadData[] CalibratedReadResults = objReader.Read(75);
+            foreach (TagReadData result in CalibratedReadResults)
+            {
+                string EPC = ByteFormat.ToHex(result.Epc, "", "");
+                string frequency = result.Frequency.ToString();
+                byte[] bCalibratedCode = result.Data;
+                string CalibratedCode = ByteFormat.ToHex(result.Data, "", "");
+                Console.WriteLine(string.Format("EPC:{0}, Frequency(kHz): {1}, CalibratedCode Code: {2}", EPC, frequency, CalibratedCode));
+                GetRFMicroTemp(CalibratedCode, TEMP_CODE);
+            }
+        }
+
+        private void GetRFMicroTemp(string CalibratedCode, int TEMP_CODE)
+        {
+            String USER_8H = CalibratedCode.Substring(0, 4);
+            Console.WriteLine(string.Format("USER_8H={0}", USER_8H));
+            String USER_9H = CalibratedCode.Substring(4, 4);
+            Console.WriteLine(string.Format("USER_9H={0}", USER_9H));
+            String USER_AH = CalibratedCode.Substring(8, 4);
+            Console.WriteLine(string.Format("USER_AH={0}", USER_AH));
+            String USER_BH = CalibratedCode.Substring(12, 4);
+            Console.WriteLine(string.Format("USER_BH={0}", USER_BH));
+
+            int CRC = Convert.ToInt32(USER_8H, 16) & 0x0000FFFF;
+            int tempCRC = Convert.ToInt32(CRC16(CalibratedCode.Substring(4, 12)), 16);
+            int CODE1 = (Convert.ToInt32(USER_9H, 16) & 0x0000FFF0) >> 4;
+            int TEMP1 = (Convert.ToInt32(USER_9H, 16) & 0x0000000F)<<7 | ((Convert.ToInt32(USER_AH, 16) & 0x0000FE00) >> 9);
+            int CODE2 = (Convert.ToInt32(USER_AH, 16) & 0x000001FF)<<3 | ((Convert.ToInt32(USER_BH, 16) & 0x0000E000) >> 13);
+            int TEMP2 = (Convert.ToInt32(USER_BH, 16) & 0x00001FFC) >> 2;
+            int VER = (Convert.ToInt32(USER_BH, 16) & 0x00000003);
+
+            double TEMP1_in_Celsius = CalculateTempInCelsius(TEMP1);
+            double TEMP2_in_Celsius = CalculateTempInCelsius(TEMP2);
+
+            double TEMP_in_Celsius = CalculateTempInCelsius(CODE1, CODE2, TEMP1, TEMP2, TEMP_CODE);
+
+            Console.WriteLine(string.Format("CRC={0}", CRC));
+            Console.WriteLine(string.Format("CODE1={0}, TEMP1={1}", CODE1, TEMP1));
+            Console.WriteLine(string.Format("CODE2={0}, TEMP2={1}", CODE2, TEMP2));
+            Console.WriteLine(string.Format("VER={0}", VER));
+            Console.WriteLine(string.Format("TEMP_CODE={0}", TEMP_CODE));
+
+            Console.WriteLine(string.Format("TEMP1_in_Celsius={0}", TEMP1_in_Celsius));
+            Console.WriteLine(string.Format("TEMP2_in_Celsius={0}", TEMP2_in_Celsius));
+            Console.WriteLine(string.Format("TEMP_in_Celsius={0}", TEMP_in_Celsius));
+        }
+
+        private string CRC16(string dataHexString)
+        {
+            int numBytes = dataHexString.Length / 2;
+            byte[] dataByteArray = new byte[numBytes];
+            for(int b=0; b<numBytes; b++)
+            {
+                dataByteArray[numBytes - 1 - b] = Convert.ToByte(dataHexString.Substring(2 * b, 2), 16);
+            }
+
+            string CRCword = null;
+            return CRCword;
+        }
+
+        private double CalculateTempInCelsius(int CODE1, int CODE2, int TEMP1, int TEMP2, int TEMP_CODE)
+        {
+            double temp = TEMP2 - TEMP1;
+            double code = CODE2 - CODE1;
+            double c_code1 = TEMP_CODE - CODE1;
+            return (temp / code * c_code1 + TEMP1 - 800) / 10.0;
+        }
+
+        private double CalculateTempInCelsius(int temp)
+        {
+            return (temp - 800) / 10.0;
+        }
+        #endregion 
+
 
         private void stopReadILian()
         {
@@ -903,55 +1037,69 @@ namespace ThingMagic.URA2.UI.UserControls
         }
         #endregion
 
-        private void Johar_radiobutton_Click(object sender, RoutedEventArgs e)
-        {
-            SensortagChange();
-        }
-        
-        private void Ilian_radiobutton_Click(object sender, RoutedEventArgs e)
-        {
-            SensortagChange();
-        }
 
-        private void Vbl_radiobutton_Click(object sender, RoutedEventArgs e)
+        private void SensortagChange(String langName)
         {
-            SensortagChange();
-        }
-
-        private void SensortagChange()
-        {
-            //Fudan E2 827 001
-            if (johar_radiobutton.IsChecked == true)
+            Console.WriteLine("select = " + langName);
+            if (langName.Equals("Johar"))
             {
                 Dispatcher.BeginInvoke(new ThreadStart(delegate ()
                 {
                     //Johar E2 035 106
-                    class_id_combo.SelectedValue = "E2";
-                    vendor_id_combo.SelectedValue = "035";
-                    model_id_combo.SelectedValue = "106";
+                    class_id_label.Content = "E2";
+                    vendor_id_label.Content = "035";
+                    model_id_label.Content = "106";
                 }));
             }
-            else if(vbl_radiobutton.IsChecked == true)
+            else if (langName.Equals("VBL"))
             {
                 Dispatcher.BeginInvoke(new ThreadStart(delegate ()
                 {
                     //VBL E2 C19 CB1
-                    class_id_combo.SelectedValue = "E2";
-                    vendor_id_combo.SelectedValue = "C19";
-                    model_id_combo.SelectedValue = "CB1";
+                    class_id_label.Content = "E2";
+                    vendor_id_label.Content = "C19";
+                    model_id_label.Content = "CB1";
                 }));
             }
-            else if(ilian_radiobutton.IsChecked == true)
+            else if (langName.Equals("iLian"))
             {
                 Dispatcher.BeginInvoke(new ThreadStart(delegate ()
                 {
                     //iLian 32 14E 0B0
-                    class_id_combo.SelectedValue = "32";
-                    vendor_id_combo.SelectedValue = "14E";
-                    model_id_combo.SelectedValue = "0B0";
+                    class_id_label.Content = "32";
+                    vendor_id_label.Content = "14E";
+                    model_id_label.Content = "0B0";
+                }));
+            }
+            else if (langName.Equals("rfMicro"))
+            {
+                Dispatcher.BeginInvoke(new ThreadStart(delegate ()
+                {
+                    //RF micro E2 824 03B
+                    class_id_label.Content = "E2";
+                    vendor_id_label.Content = "824";
+                    model_id_label.Content = "03B";
                 }));
             }
         }
 
+        private void sensortag_combobox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            string langName = sensortag_combobox.SelectedValue.ToString();
+            Console.WriteLine(String.Format("selected item={0}", langName));
+            SensortagChange(langName);
+        }
+
+        private void Button_Click(object sender, RoutedEventArgs e)
+        {
+            
+            GetRFMicroTemp("BD9F88A7E1477900", 2315);
+        }
+    }
+
+    public class CategoryInfo
+    {
+        public string Name { get; set; }
+        public string Value { get; set; }
     }
 }

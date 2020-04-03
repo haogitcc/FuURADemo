@@ -23,18 +23,9 @@
         <StackPanel Orientation="Horizontal" Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="3">
             <Button Name="temp_read_button" Content="Read" Width="75" Margin="5" Click="Temp_read_button_Click"/>
             <Button Name="temp_clear_button" Content="Clear" Width="75" Margin="5" Click="Temp_clear_button_Click"/>
-            <GroupBox x:Name="sensortag_groupbox" Background="White" BorderThickness="2" BorderBrush="Black" VerticalAlignment="Center">
-                <StackPanel Orientation="Horizontal" >
-                    <StackPanel Orientation="Vertical" Margin="4" MinWidth="60">
-                        <RadioButton x:Name="johar_radiobutton" Content="Johar" Margin="1" GroupName="sensortags" Click="Johar_radiobutton_Click"/>
-                        <RadioButton x:Name="vbl_radiobutton" Content="VBL" Margin="1" GroupName="sensortags" Click="Vbl_radiobutton_Click"/>
-                    </StackPanel>
-                    <StackPanel Orientation="Vertical" Margin="4" MinWidth="60">
-                        <RadioButton x:Name="ilian_radiobutton" Content="iLian" Margin="1" GroupName="sensortags" Click="Ilian_radiobutton_Click"/>
-                    </StackPanel>
-                </StackPanel>
-            </GroupBox>
+            <ComboBox Name="sensortag_combobox" MinWidth="120" Margin="5" VerticalContentAlignment="Center" SelectionChanged="sensortag_combobox_SelectionChanged"/>
             <Label x:Name="sensortags_readingstatus_label" Content="none" MinWidth="120" Margin="5"/>
+            <Button Content="Button" Width="75" Click="Button_Click"/>
         </StackPanel>
        
         <GroupBox x:Name="sensortag_tid_gropbox" Background="White" Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="3" IsEnabled="False">
@@ -60,9 +51,9 @@
                 <Label Grid.Row="0" Grid.Column="3" Content="Model ID"/>
 
                 <Label Grid.Row="1" Grid.Column="0" Content="combo (Hex) :" Width="95"/>
-                <ComboBox Name="class_id_combo" Grid.Row="1" Grid.Column="1" Margin="3" />
-                <ComboBox Name="vendor_id_combo" Grid.Row="1" Grid.Column="2" Margin="3" Width="85" RenderTransformOrigin="0.501,0.507"/>
-                <ComboBox Name="model_id_combo" Grid.Row="1" Grid.Column="3" Margin="3" Width="101"/>
+                <Label Name="class_id_label" Grid.Row="1" Grid.Column="1" Margin="3" />
+                <Label Name="vendor_id_label" Grid.Row="1" Grid.Column="2" Margin="3" Width="85" RenderTransformOrigin="0.501,0.507"/>
+                <Label Name="model_id_label" Grid.Row="1" Grid.Column="3" Margin="3" Width="101"/>
 
             </Grid>
         </GroupBox>
