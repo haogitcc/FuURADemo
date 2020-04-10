@@ -166,7 +166,7 @@
     <sys:String x:Key="WEB SITE ADDR">https://www.fuwit.com</sys:String>
     <sys:String x:Key="copyright">深圳市铨顺宏科技有限公司 版权所有 备案号：粤ICP备13059692</sys:String>
     <sys:String x:Key="Universal Reader Assistant ">读写器助手 base URA  </sys:String>
-    <sys:String x:Key="Default IP">192.168.8.166:8086</sys:String>
+    <sys:String x:Key="Default IP">192.168.1.100:8086</sys:String>
     
     <sys:String x:Key="Perform read based on the read behavior defined  by the settings in the Read Options sidebar.">Perform read based on the read behavior defined  by the settings in the Read Options sidebar.</sys:String>
     <sys:String x:Key="Please make sure to provide additional DC power source to the reader">Please make sure to provide additional DC power source to the reader</sys:String>

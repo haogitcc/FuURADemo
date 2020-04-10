@@ -25,7 +25,23 @@
             <Button Name="temp_clear_button" Content="Clear" Width="75" Margin="5" Click="Temp_clear_button_Click"/>
             <ComboBox Name="sensortag_combobox" MinWidth="120" Margin="5" VerticalContentAlignment="Center" SelectionChanged="sensortag_combobox_SelectionChanged"/>
             <Label x:Name="sensortags_readingstatus_label" Content="none" MinWidth="120" Margin="5"/>
-            <Button Content="Button" Width="75" Click="Button_Click"/>
+            <StackPanel Orientation="Horizontal" Margin="5" Name="VBL_stackpanel" Visibility="Visible">
+                <StackPanel Orientation="Vertical" VerticalAlignment="Center">
+                    <CheckBox Name="tune_checkbox" Content="TUNE" Checked="VBL_Checked" Unchecked="VBL_Unchecked"/>
+                    <CheckBox Name="nValue_checkbox" Content="NValue" Checked="VBL_Checked" Unchecked="VBL_Unchecked"/>
+                    <CheckBox Name="vbl_temperture_checkbox" Content="Temperture" IsChecked="True" Checked="VBL_Checked" Unchecked="VBL_Unchecked"/>
+                </StackPanel>
+            </StackPanel>
+            <StackPanel Orientation="Horizontal" Margin="5" Name="RFMicronMagnusS3_stackpanel" Visibility="Collapsed">
+                    <StackPanel Orientation="Vertical" VerticalAlignment="Center">
+                        <CheckBox Name="sensorCode_checkbox" Content="Sensor Code"/>
+                        <CheckBox Name="onChipRSSI_checkbox" Content="OnChip RSSI"/>
+                    </StackPanel>
+                    <StackPanel Orientation="Vertical" VerticalAlignment="Center">
+                        <CheckBox Name="calibratedCode_checkbox" Content="Calibrated Code" IsChecked="True"/>
+                        <CheckBox Name="temperatureCode_checkbox" Content="Temperature Code" IsChecked="True"/>
+                    </StackPanel>
+                </StackPanel>
         </StackPanel>
        
         <GroupBox x:Name="sensortag_tid_gropbox" Background="White" Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="3" IsEnabled="False">

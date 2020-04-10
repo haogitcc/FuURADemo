@@ -22,11 +22,9 @@ namespace ThingMagic.URA2.BL
         protected string newEpc = "";
         protected int writeStatus = 0;
         protected double temperature = 0.0;
-        protected bool isJohar = false;
-        protected bool isVBL = false;
-        protected bool isVBL_Tune = false;
-        protected bool isVBL_NValue = false;
-        protected bool isILian = false;
+
+        protected SensorType sensorType = SensorType.Normal;
+        protected SensorSubType sensorSubType = SensorSubType.NONE;
 
         public TagReadRecord(TagReadData newData)
         {
@@ -57,20 +55,20 @@ namespace ThingMagic.URA2.BL
             }
 
             //Console.WriteLine("Update isJohar=" + isJohar);
-            if (isJohar)
+            if (sensorType == SensorType.Johar)
             {
                 double temp = getJoharTemp(mergeData);
                 if (temp != UNSPECTTEMP)
                     temperature = temp;
             }
-            else if(isVBL)
+            else if(sensorType == SensorType.VBL)
             {
-                if (isVBL_Tune == true && isVBL_NValue == false)
+                if (sensorSubType == SensorSubType.VBL_TUNE)
                 {
                     if (VBL_Tune.Trim().Equals(""))
                         VBL_Tune = ByteFormat.ToHex(mergeData.Data, "", "");
                 }
-                else if (isVBL_Tune == false && isVBL_NValue == true)
+                else if (sensorSubType == SensorSubType.VBL_NValue)
                 {
                     VBL_NValue = ByteFormat.ToHex(mergeData.Data, "", "");
                     if(!VBL_Tune.Trim().Equals("")&&!VBL_NValue.Trim().Equals(""))
@@ -81,16 +79,27 @@ namespace ThingMagic.URA2.BL
                     }
                 }
             }
-            else if (isILian)
+            else if (sensorType == SensorType.ILian)
             {
                 double temp = getILianTemp(mergeData);
                 if (temp != UNSPECTTEMP)
                     temperature = temp; 
             }
+            else if (sensorType == SensorType.RFMicronMagnusS3)
+            {
+                double temp = getRFMicronMagnusS3Temp(mergeData);
+                if (temp != UNSPECTTEMP)
+                    temperature = temp;
+            }
 
             OnPropertyChanged(null);
         }
-        
+
+        private double getRFMicronMagnusS3Temp(TagReadData mergeData)
+        {
+            return 0;
+        }
+
         public UInt32 SerialNumber
         {
             get { return serialNo; }
@@ -243,9 +252,23 @@ namespace ThingMagic.URA2.BL
             }
         }
 
-        public string VBL_Tune { get; set; } = "";
+        public SensorType SensorType
+        {
+            get { return sensorType; }
+            set
+            {
+                sensorType = value;
+            }
+        }
 
-        public string VBL_NValue { get; set; } = "";
+        public SensorSubType SensorSubType
+        {
+            get { return sensorSubType; }
+            set
+            {
+                sensorSubType = value;
+            }
+        }
 
         public double Temperature
         {
@@ -256,6 +279,9 @@ namespace ThingMagic.URA2.BL
                 temperature = value;
             }
         }
+
+        public string VBL_Tune { get; set; } = "";
+        public string VBL_NValue { get; set; } = "";
 
         private double getILianTemp(TagReadData RawRead)
         {
@@ -383,51 +409,6 @@ namespace ThingMagic.URA2.BL
                 value ^= (data[count + offset] & 0x000000FF);
             }
             return value;
-        }
-
-        public bool IsJohar
-        {
-            get { return isJohar; }
-            set
-            {
-                isJohar = value;
-            }
-        }
-
-        public bool IsVBL
-        {
-            get { return isVBL; }
-            set
-            {
-                isVBL = value;
-            }
-        }
-
-        public bool IsVBL_Tune
-        {
-            get { return isVBL_Tune; }
-            set
-            {
-                isVBL_Tune = value;
-            }
-        }
-
-        public bool IsVBL_NValue
-        {
-            get { return isVBL_NValue; }
-            set
-            {
-                isVBL_NValue = value;
-            }
-        }
-
-        public bool IsILian
-        {
-            get { return isILian; }
-            set
-            {
-                isILian = value;
-            }
         }
 
         #region INotifyPropertyChanged Members
@@ -620,7 +601,11 @@ namespace ThingMagic.URA2.BL
 
         static long UniqueTagCounts = 0;
         static long TotalTagCounts = 0;
-        
+
+        private SensorType tagdbSensorType = SensorType.Normal;
+
+        private SensorSubType tagdbSensorSubType = SensorSubType.NONE;
+
         public TagDatabase()
         {
             // GUI can't keep up with fast updates, so disable automatic triggers
@@ -639,14 +624,16 @@ namespace ThingMagic.URA2.BL
         {
             get { return TotalTagCounts; }
         }
+        
+        public SensorType SensorType { 
+            get { return tagdbSensorType; }
+            set { tagdbSensorType = value; }
+        }
 
-        public bool tagdbIsJohar { get; set; }
-
-        public bool tagdbIsVBL { get; set; }
-        public bool tagdbIsVBL_Tune { get;  set; }
-        public bool tagdbIsVBL_NValue { get;  set; }
-
-        public bool tagdbIsILian { get; set; }
+        public SensorSubType SensorSubType { 
+            get { return tagdbSensorSubType; }
+            set { tagdbSensorSubType = value; }
+        }
 
         public void Clear()
         {
@@ -664,14 +651,10 @@ namespace ThingMagic.URA2.BL
             {
                 string key = null;
 
-                if (tagdbIsJohar)
+                if (tagdbSensorType == SensorType.Johar)
                 {
                     key = addData.EpcString.Substring(0, 4);
                     //Console.WriteLine("*** tagdb add key=" + key);
-                }
-                else if (tagdbIsVBL || tagdbIsILian)
-                {
-                    key = addData.EpcString; //if only keying on EPCID
                 }
                 else
                 {
@@ -724,33 +707,9 @@ namespace ThingMagic.URA2.BL
                 {
                     TagReadRecord value = new TagReadRecord(addData);
                     value.SerialNumber = (uint)EpcIndex.Count + 1;
-                    if (tagdbIsJohar)
-                    {
-                        Console.WriteLine("### IsJohar=" + tagdbIsJohar);
-                        value.IsJohar = true;
-                        value.Temperature = 0.0;// tagdbGetTemperature(addData); //ToDo add temperature
-
-                    }
-                    else if (tagdbIsVBL)
-                    {
-                        value.IsVBL = true;
-                        if (tagdbIsVBL_Tune == true && tagdbIsVBL_NValue == false)
-                        {
-                            value.IsVBL_Tune = true;
-                            value.IsVBL_NValue = false;
-                        }
-                        else if (tagdbIsVBL_Tune == false && tagdbIsVBL_NValue == true)
-                        {
-                            value.IsVBL_Tune = false;
-                            value.IsVBL_NValue = true;
-                        }
-                    }
-                    else if (tagdbIsILian)
-                    {
-                        value.IsILian = true;
-                    }
-
-                    //Console.WriteLine("### gpio=" + value.GPIO);
+                    value.SensorType = tagdbSensorType;
+                    value.SensorSubType = tagdbSensorSubType;
+                    Console.WriteLine(string.Format("Sensor={0}, Sub={1}", tagdbSensorType, tagdbSensorSubType));
 
                     _tagList.Add(value);
                     EpcIndex.Add(key, value);
@@ -760,22 +719,22 @@ namespace ThingMagic.URA2.BL
                 }
                 else
                 {
-                    if (tagdbIsVBL)
+                    EpcIndex[key].SensorSubType = tagdbSensorSubType;
+                    if (tagdbSensorType == SensorType.VBL)
                     {
-                        EpcIndex[key].IsVBL = true;
-                        if (tagdbIsVBL_Tune == true && tagdbIsVBL_NValue == false)
+                        if (tagdbSensorSubType == SensorSubType.VBL_TUNE)
                         {
-                            EpcIndex[key].IsVBL_Tune = true;
-                            EpcIndex[key].IsVBL_NValue = false;
                             if (EpcIndex[key].VBL_Tune.Trim().Equals(""))
                                 EpcIndex[key].VBL_Tune = ByteFormat.ToHex(addData.Data, "", "");
                         }
-                        else if (tagdbIsVBL_Tune == false && tagdbIsVBL_NValue == true)
+                        else if (tagdbSensorSubType == SensorSubType.VBL_NValue)
                         {
-                            EpcIndex[key].IsVBL_Tune = false;
-                            EpcIndex[key].IsVBL_NValue = true;
                             EpcIndex[key].VBL_NValue = ByteFormat.ToHex(addData.Data, "", "");
                         }
+                    }
+                    if(tagdbSensorType == SensorType.RFMicronMagnusS3)
+                    {
+                       
                     }
 
                     EpcIndex[key].Update(addData); //ToDo update temperature
@@ -838,5 +797,33 @@ namespace ThingMagic.URA2.BL
                 return builder.ToString().ToLower();
             return builder.ToString();
         }
+    }
+}
+
+namespace ThingMagic.URA2
+{
+    public enum SensorType
+    {
+        Normal = 0,
+        Johar = 1,
+        VBL = 2,
+        ILian = 3,
+        RFMicronMagnusS3 = 4
+    }
+
+    public enum SensorSubType
+    {
+        NONE = 00,
+        //VBL
+        VBL_NONE   = 10,
+        VBL_TUNE   = 11,
+        VBL_NValue = 12,
+
+        //RF Micron Magnus-S3
+        RFMicroMagnusS3_NONE            = 20,
+        RFMicroMagnusS3_SensorCode      = 21,
+        RFMicroMagnusS3_OnChipRSSI      = 22,
+        RFMicroMagnusS3_CalibratedCode  = 23,
+        RFMicroMagnusS3_TemperatureCode = 24
     }
 }

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Text;
 using System.Threading;
 using System.Windows;
 using System.Windows.Controls;
@@ -19,30 +20,23 @@ namespace ThingMagic.URA2.UI.UserControls
     {
         String Tags = "ucSensorTags ";
         Reader objReader;
-        uint startAddress = 0;
         string model = string.Empty;
-        Gen2.Bank selectMemBank;
-        TagFilter searchSelect = null;
         List<int> antennaList = null;
 
         TagDatabase tagdb = new TagDatabase();
         public bool chkEnableTagAging = false;
         public bool enableTagAgingOnRead = false;
 
-
-        private ManualResetEvent waitUntilReadMethodCalled = new ManualResetEvent(false);
         private Thread asyncReadThread = null;
         private Thread vblTagsCountDetectThread = null;
-
-        private Gen2.Target originalTarget;
-        bool isStartRead = false;
-
-        static int tid = 0;
 
         private bool _exitNow = false;
         private bool IsCountChange = true;
         private bool isReadingTune = false;
         private bool isReadingNValue = true;
+
+        bool isStartRead = false;
+        static int tid = 0;
 
         public ucSensorTags()
         {
@@ -60,7 +54,7 @@ namespace ThingMagic.URA2.UI.UserControls
             categoryList.Add(new CategoryInfo { Name = "宜链", Value = "iLian" });
             categoryList.Add(new CategoryInfo { Name = "RF Micro Magnus S3", Value = "rfMicro" });
 
-            sensortag_combobox.SelectedIndex = 0;
+            sensortag_combobox.SelectedIndex = 3;
 
             GenerateColmnsForDataGrid();
             this.DataContext = tagdb.TagList;
@@ -117,8 +111,6 @@ namespace ThingMagic.URA2.UI.UserControls
             Console.WriteLine(Tags + "### GenerateColmnsForDataGrid done");
         }
 
-        #region EventHandler
-
         #region DataGridHeaderChkBox
         private void CheckBox_Checked(object sender, RoutedEventArgs e)
         {
@@ -138,7 +130,6 @@ namespace ThingMagic.URA2.UI.UserControls
             }
             temp_dgTagResults.Items.Refresh();
         }
-        #endregion
 
         /// <summary>
         /// Change the ToolTip content based on the state of header checkbox in datagrid
@@ -157,6 +148,7 @@ namespace ThingMagic.URA2.UI.UserControls
                 ch.ToolTip = "SelectALL";
             }
         }
+        #endregion //DataGridHeaderChkBox
 
         /// <summary>
         /// Retain aged tag cell colour
@@ -242,15 +234,96 @@ namespace ThingMagic.URA2.UI.UserControls
             }
         }
 
-        #endregion EventHandler
-
         private void temp_dgTagResults_LostFocus(object sender, RoutedEventArgs e)
         {
             temp_dgTagResults.UnselectAll();
             ContextMenu ctMenu = (ContextMenu)App.Current.MainWindow.FindName("ctMenu");
             ctMenu.Visibility = System.Windows.Visibility.Collapsed;
         }
+
+        public void ResetSensorTagsTab()
+        {
+            Console.WriteLine(Tags + "### ResetSensorTagsTab");
+            if (temp_read_button.Content.Equals("Stop"))
+            {
+                Temp_read_button_Click(null, null);
+            }
+        }
+
+        private void Temp_clear_button_Click(object sender, RoutedEventArgs e)
+        {
+            Dispatcher.BeginInvoke(new ThreadStart(delegate ()
+            {
+                tagdb.Clear();
+                tagdb.Repaint();
+            }));
+            Dispatcher.Invoke(new ThreadStart(delegate ()
+            {
+                unique_sensortags_count.Content = "0";
+                total_sensortags_read_count.Content = "0";
+            }));
+        }
         
+        private void SensortagChange(String langName)
+        {
+            Console.WriteLine("select = " + langName);
+            if (langName.Equals("Johar"))
+            {
+                Dispatcher.BeginInvoke(new ThreadStart(delegate ()
+                {
+                    //Johar E2 035 106
+                    class_id_label.Content = "E2";
+                    vendor_id_label.Content = "035";
+                    model_id_label.Content = "106";
+                    VBL_stackpanel.Visibility = Visibility.Collapsed;
+                    RFMicronMagnusS3_stackpanel.Visibility = Visibility.Collapsed;
+                }));
+            }
+            else if (langName.Equals("VBL"))
+            {
+                Dispatcher.BeginInvoke(new ThreadStart(delegate ()
+                {
+                    //VBL E2 C19 CB1
+                    class_id_label.Content = "E2";
+                    vendor_id_label.Content = "C19";
+                    model_id_label.Content = "CB1";
+                    VBL_stackpanel.Visibility = Visibility.Visible;
+                    RFMicronMagnusS3_stackpanel.Visibility = Visibility.Collapsed;
+                }));
+            }
+            else if (langName.Equals("iLian"))
+            {
+                Dispatcher.BeginInvoke(new ThreadStart(delegate ()
+                {
+                    //iLian 32 14E 0B0
+                    class_id_label.Content = "32";
+                    vendor_id_label.Content = "14E";
+                    model_id_label.Content = "0B0";
+                    VBL_stackpanel.Visibility = Visibility.Collapsed;
+                    RFMicronMagnusS3_stackpanel.Visibility = Visibility.Collapsed;
+                }));
+            }
+            else if (langName.Equals("rfMicro"))
+            {
+                Dispatcher.BeginInvoke(new ThreadStart(delegate ()
+                {
+                    //RF micro E2 824 03B
+                    class_id_label.Content = "E2";
+                    vendor_id_label.Content = "824";
+                    model_id_label.Content = "03B";
+                    VBL_stackpanel.Visibility = Visibility.Collapsed;
+                    RFMicronMagnusS3_stackpanel.Visibility = Visibility.Visible;
+                }));
+            }
+        }
+
+        private void sensortag_combobox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            string langName = sensortag_combobox.SelectedValue.ToString();
+            Console.WriteLine(String.Format("selected item={0}", langName));
+            SensortagChange(langName);
+        }
+
         private void Temp_read_button_Click(object sender, RoutedEventArgs e)
         {
             string langName = sensortag_combobox.SelectedValue.ToString();
@@ -264,7 +337,7 @@ namespace ThingMagic.URA2.UI.UserControls
                 }
                 sensortag_combobox.IsEnabled = false;
                 temp_read_button.Content = "Stop";
-                
+
 
                 if (langName.Equals("Johar"))
                 {
@@ -281,7 +354,6 @@ namespace ThingMagic.URA2.UI.UserControls
                 else if (langName.Equals("rfMicro"))
                 {
                     startReadRFMicro();
-                    temp_read_button.Content = "Read";
                 }
             }
             else if (temp_read_button.Content.Equals("Stop"))
@@ -289,6 +361,10 @@ namespace ThingMagic.URA2.UI.UserControls
                 sensortag_combobox.IsEnabled = true;
                 sensortag_tid_gropbox.IsEnabled = true;
                 temp_read_button.Content = "Read";
+
+                tagdb.SensorType = SensorType.Normal;
+                tagdb.SensorSubType = SensorSubType.VBL_NONE;
+
                 if (langName.Equals("Johar"))
                 {
                     stopReadJohar();
@@ -307,27 +383,147 @@ namespace ThingMagic.URA2.UI.UserControls
                 }
             }
         }
+
+        #region TagListener
+        private void PrintTagreads(Object sender, TagReadDataEventArgs e)
+        {
+            //Console.WriteLine(Tags + " ### EPC[" + e.TagReadData.EpcString + "]");
+            Dispatcher.BeginInvoke(new ThreadStart(delegate ()
+            {
+                tagdb.Add(e.TagReadData);
+            }));
+
+            Dispatcher.BeginInvoke(new ThreadStart(delegate ()
+            {
+                tagdb.Repaint();
+            }));
+
+            Dispatcher.BeginInvoke(new ThreadStart(delegate ()
+            {
+                total_sensortags_read_count.Content = tagdb.TotalTagCount.ToString();
+                unique_sensortags_count.Content = tagdb.UniqueTagCount.ToString();
+            }
+            ));
+        }
+
+        private void r_ReadException(object sender, ReaderExceptionEventArgs e)
+        {
+            StringBuilder msg = new StringBuilder();
+            msg.Append("**************** r_ReadException *********************** \r\n");
+            msg.AppendFormat(" 异常发生时间： {0} \r\n", DateTime.Now);
+            msg.AppendFormat(" 异常类型： {0} \r\n", e.ReaderException.GetType());
+            msg.AppendFormat(" 导致当前异常的 Exception 实例： {0} \r\n", e.ReaderException.InnerException);
+            msg.AppendFormat(" 导致异常的应用程序或对象的名称： {0} \r\n", e.ReaderException.Source);
+            msg.AppendFormat(" 引发异常的方法： {0} \r\n", e.ReaderException.TargetSite);
+            msg.AppendFormat(" 异常堆栈信息： {0} \r\n", e.ReaderException.StackTrace);
+            msg.AppendFormat(" 异常消息： {0} \r\n", e.ReaderException.Message);
+            msg.Append("***************************************");
+            Console.WriteLine(msg);
+            MessageBox.Show(e.ReaderException.Message, e.ReaderException.ToString(), MessageBoxButton.OK, MessageBoxImage.Error);
+        }
+        #endregion
+
         #region RF Micron Magnus-S3 Sensor Tag
         private void stopReadRFMicro()
         {
-            
+            Console.WriteLine("StopRead RF Micron Magnus-S3 [{0}, {1}]...", tagdb.SensorType, tagdb.SensorSubType);
+            tagdb.SensorType = SensorType.Normal;
+            tagdb.SensorSubType = SensorSubType.NONE;
+
+            objReader.TagRead -= PrintTagreads;
+            objReader.ReadException -= new EventHandler<ReaderExceptionEventArgs>(r_ReadException);
+            objReader.StopReading();
+            Console.WriteLine("stopReadRFMicro: Stoped");
         }
 
         private void startReadRFMicro()
         {
+            if (sensorCode_checkbox.IsChecked.Value == true)
+            {
+                //Define a tag read operation which reads from a Magnus-S3 403h 
+                //Sensor Code in Reserved bank, in memory hex C
+                TagOp sensorCodeRead = new Gen2.ReadData(Gen2.Bank.RESERVED, 0xC, 1);
+                SimpleReadPlan readPlan = new SimpleReadPlan(antennaList, TagProtocol.GEN2, null, sensorCodeRead, true, 100);
+                objReader.ParamSet("/reader/read/plan", readPlan);
+
+                asyncReadRFMicronMagnusS3(SensorType.RFMicronMagnusS3, SensorSubType.RFMicroMagnusS3_SensorCode);
+            }
+            else if (onChipRSSI_checkbox.IsChecked.Value == true)
+            {
+                //Define a Select command which applies to a Magnus-S3 403h 
+                //We want all tags to respond, regardless of their On-Chip RSSI Code Value
+                //so our select mask should ba a hex value of 1F
+                byte[] mask = { Convert.ToByte("1F", 16) };
+                //Select User memory bank and pointer value bit address of hex D0
+                Gen2.Select select = new Gen2.Select(false, Gen2.Bank.USER, 0xD0, 8, mask);
+                //The On-Chip RSSI Code in the Reserved bank, word location hex D
+                TagOp onChipRSSICodeRead = new Gen2.ReadData(Gen2.Bank.RESERVED, 0xD, 1);
+                SimpleReadPlan readPlan = new SimpleReadPlan(antennaList, TagProtocol.GEN2, select, onChipRSSICodeRead, true, 100);
+                objReader.ParamSet("/reader/read/plan", readPlan);
+
+                asyncReadRFMicronMagnusS3(SensorType.RFMicronMagnusS3, SensorSubType.RFMicroMagnusS3_OnChipRSSI);
+            }
+            else if (calibratedCode_checkbox.IsChecked.Value == true)
+            {
+                TagOp Calibrated = new Gen2.ReadData(Gen2.Bank.USER, 0x8, 4);
+                SimpleReadPlan readPlan = new SimpleReadPlan(antennaList, TagProtocol.GEN2, null, Calibrated, true, 100);
+                objReader.ParamSet("/reader/read/plan", readPlan);
+
+                asyncReadRFMicronMagnusS3(SensorType.RFMicronMagnusS3, SensorSubType.RFMicroMagnusS3_CalibratedCode);
+            }
+            else if(temperatureCode_checkbox.IsChecked == true)
+            {
+                tagdb.SensorSubType = SensorSubType.RFMicroMagnusS3_TemperatureCode;
+                Gen2.Session session = Gen2.Session.S0;
+                objReader.ParamSet("/reader/gen2/session", session);
+                Gen2.Target target = Gen2.Target.AB;
+                objReader.ParamSet("/reader/gen2/target", target);
+
+                //Achieving an accurate Temperature Code requires the Select command to be followed by 3 ms of continuous wave before the reader issues any further commands. 
+                UInt32 time = 30000;
+                objReader.ParamSet("/reader/gen2/t4", time);
+
+                //Define a Select command which applies to a Magnus-S3 403h 
+                //select mask should ba a hex value of USER hex of E0, mask length is zero
+                Gen2.Select select = new Gen2.Select(false, Gen2.Bank.USER, 0xE0, 0, new byte[0]);
+                //After the tag has recived the Select Command
+                //the Temperature Code in the , Reserved bank occupies the least-significant 12 bits of the word location of hex Reserved E
+                TagOp temperatureCodeRead = new Gen2.ReadData(Gen2.Bank.RESERVED, 0xE, 1);
+                SimpleReadPlan readPlan = new SimpleReadPlan(antennaList, TagProtocol.GEN2, select, temperatureCodeRead, true, 100);
+                objReader.ParamSet("/reader/read/plan", readPlan);
+
+                asyncReadRFMicronMagnusS3(SensorType.RFMicronMagnusS3, SensorSubType.RFMicroMagnusS3_TemperatureCode);
+            }
+
+            
             //Read the Sensor Code 
-            ReadRFMicronSensorCode();
+            //ReadRFMicronSensorCode();
 
             //Read the On-Chip RSSI Code 
-            ReadRFMicronOnChipCode();
+            //ReadRFMicronOnChipCode();
 
             //Calibrated Temperature Measurements
-            string CalibratedCode = ReadRFMicronCalibratedMeasurements();
+            //string CalibratedCode = ReadRFMicronCalibratedMeasurements();
 
             //Read the Temperature Code 
-            int TEMP_CODE = ReadRFMicronTemperatureCode();
+            //int TEMP_CODE = ReadRFMicronTemperatureCode();
 
-            GetRFMicroTemp(CalibratedCode, TEMP_CODE);
+            //if(TEMP_CODE != 0)
+            //GetRFMicroTemp(CalibratedCode, TEMP_CODE);
+        }
+
+        private void asyncReadRFMicronMagnusS3(SensorType sensorType, SensorSubType sensorSubType)
+        {
+            //开始读温度数据
+            objReader.TagRead += PrintTagreads;
+            objReader.ReadException += new EventHandler<ReaderExceptionEventArgs>(r_ReadException);
+
+            tagdb.SensorType = sensorType;
+            tagdb.SensorSubType = sensorSubType;
+
+            objReader.StartReading();
+            Console.WriteLine("StartRead RF Micron Magnus-S3 [{0}, {1}]...", sensorType, sensorSubType);
+
         }
 
         private string ReadRFMicronCalibratedMeasurements()
@@ -340,17 +536,32 @@ namespace ThingMagic.URA2.UI.UserControls
             TagReadData[] CalibratedReadResults = objReader.Read(75);
             foreach (TagReadData result in CalibratedReadResults)
             {
-                string EPC = ByteFormat.ToHex(result.Epc, "", "");
-                string frequency = result.Frequency.ToString();
-                byte[] bCalibratedCode = result.Data;
                 CalibratedCode = ByteFormat.ToHex(result.Data, "", "");
-                Console.WriteLine(string.Format("EPC:{0}, Frequency(kHz): {1}, CalibratedCode Code: {2}", EPC, frequency, CalibratedCode));
+                LogRFMicron(result, "Calibrated Code");
             }
             return CalibratedCode;
         }
 
+        private void LogRFMicron(TagReadData result, string dataType)
+        {
+            string EPC = ByteFormat.ToHex(result.Epc, "", "");
+            string frequency = result.Frequency.ToString();
+            string data = ByteFormat.ToHex(result.Data, "", "");
+            int antenna = result.Antenna;
+            Console.WriteLine(string.Format("EPC:{0},ant:{1}, Frequency(kHz): {2}, {3}: {4}", EPC, antenna, frequency, dataType ,data));
+        }
+
         private int ReadRFMicronTemperatureCode()
         {
+
+            Gen2.Session session = Gen2.Session.S0;
+            objReader.ParamSet("/reader/gen2/session", session);
+            Gen2.Target target = Gen2.Target.AB;
+            objReader.ParamSet("/reader/gen2/target", target);
+
+            //Achieving an accurate Temperature Code requires the Select command to be followed by 3 ms of continuous wave before the reader issues any further commands. 
+            UInt32 time = 30000;
+            objReader.ParamSet("/reader/gen2/t4", time);
             int TEMP_CODE = 0;
             //Define a Select command which applies to a Magnus-S3 403h 
             //select mask should ba a hex value of USER hex of E0, mask length is zero
@@ -362,12 +573,13 @@ namespace ThingMagic.URA2.UI.UserControls
             objReader.ParamSet("/reader/read/plan", readPlan);
 
             TagReadData[] TemperatureCodeReadResults = objReader.Read(75);
+            Console.WriteLine("Temp Read Result: " + TemperatureCodeReadResults.Length);
             foreach (TagReadData result in TemperatureCodeReadResults)
             {
-                string EPC = ByteFormat.ToHex(result.Epc, "", "");
-                string frequency = result.Frequency.ToString();
                 string TemperatureCode = ByteFormat.ToHex(result.Data, "", "");
-                Console.WriteLine(string.Format("EPC:{0}, Frequency(kHz): {1}, Temperature Code: {2}", EPC, frequency, TemperatureCode));
+                LogRFMicron(result, "Temperature Code");
+                if (TemperatureCode.Length < 4)
+                    return TEMP_CODE;
                 TEMP_CODE = Convert.ToInt32(TemperatureCode, 16) & 0x00000FFF;
             }
             return TEMP_CODE;
@@ -420,6 +632,8 @@ namespace ThingMagic.URA2.UI.UserControls
 
         private void GetRFMicroTemp(string CalibratedCode, int TEMP_CODE)
         {
+            if (CalibratedCode == null || CalibratedCode.Length < 16)
+                return;
             String USER_8H = CalibratedCode.Substring(0, 4);
             String USER_9H = CalibratedCode.Substring(4, 4);
             String USER_AH = CalibratedCode.Substring(8, 4);
@@ -449,6 +663,7 @@ namespace ThingMagic.URA2.UI.UserControls
             Console.WriteLine(string.Format("TEMP1_in_Celsius={0}", TEMP1_in_Celsius));
             Console.WriteLine(string.Format("TEMP2_in_Celsius={0}", TEMP2_in_Celsius));
             Console.WriteLine(string.Format("TEMP_in_Celsius={0}", TEMP_in_Celsius));
+            Console.WriteLine("============================");
         }
 
         private string CRC16(string dataHexString)
@@ -499,26 +714,14 @@ namespace ThingMagic.URA2.UI.UserControls
         {
             return (temp - 800) / 10.0;
         }
-        #endregion 
+        #endregion
 
-
-        private void stopReadILian()
-        {
-            tagdb.tagdbIsJohar = false;
-            tagdb.tagdbIsVBL = false;
-            tagdb.tagdbIsILian = false;
-
-            objReader.StopReading();
-            objReader.TagRead -= PrintTagreads;
-            objReader.ReadException -= new EventHandler<ReaderExceptionEventArgs>(r_ReadException);
-            objReader.ParamSet("/reader/gen2/target", originalTarget);
-        }
-
+        #region iLian
+        private Gen2.Target originalTarget;
         private void startReadILian()
         {
-            tagdb.tagdbIsJohar = false;
-            tagdb.tagdbIsVBL = false;
-            tagdb.tagdbIsILian = true;
+            tagdb.SensorType = SensorType.ILian;
+            tagdb.SensorSubType = SensorSubType.NONE;
 
             foreach (int ant in antennaList)
             {
@@ -533,7 +736,6 @@ namespace ThingMagic.URA2.UI.UserControls
             //iLian: ClsId + VendorId + ModelId = 32 14E 0B0
             byte[] tidmask = new byte[] { (byte)0x32, (byte)0x14, (byte)0xE0, (byte)0xB0 };
             Gen2.Select tidFilter = new Gen2.Select(false, Gen2.Bank.TID, 0, (byte)(tidmask.Length * 8), tidmask);
-            
 
             TagOp readUsrOp = new Gen2.ReadData(Gen2.Bank.USER, 0x7F, (byte)1); ;
 
@@ -548,58 +750,314 @@ namespace ThingMagic.URA2.UI.UserControls
             objReader.StartReading();
             Console.WriteLine("****** startReading...");
         }
-
-        private void stopReadVBL()
+        private void stopReadILian()
         {
-            isStartRead = false;
-
-            tagdb.tagdbIsJohar = false;
-            tagdb.tagdbIsVBL = false;
-            tagdb.tagdbIsILian = false;
-
-            tagdb.tagdbIsVBL_Tune = false;
-            tagdb.tagdbIsVBL_NValue = false;
-
-            IsCountChange = false;
-            isReadingTune = false;
-            isReadingNValue = false;
-
-            StopReading();
-
+            objReader.StopReading();
+            objReader.TagRead -= PrintTagreads;
+            objReader.ReadException -= new EventHandler<ReaderExceptionEventArgs>(r_ReadException);
             objReader.ParamSet("/reader/gen2/target", originalTarget);
+        }
+        #endregion //iLian
+
+        #region VBL
+        
+        private void VBL_Checked(object sender, RoutedEventArgs e)
+        {
+
+        }
+
+        private void VBL_Unchecked(object sender, RoutedEventArgs e)
+        {
+
         }
 
         private void startReadVBL()
         {
             isStartRead = true;
-
-            tagdb.tagdbIsJohar = false;
-            tagdb.tagdbIsVBL = true;
-            tagdb.tagdbIsILian = false;
+            tagdb.SensorType = SensorType.VBL;
+            tagdb.SensorSubType = SensorSubType.VBL_NONE;
 
             originalTarget = (Gen2.Target)objReader.ParamGet("/reader/gen2/target");
             objReader.ParamSet("/reader/gen2/target", Gen2.Target.AB);
             Console.WriteLine("### set target to AB success");
 
-            StartReading();
+            StartVBLReading();
         }
 
-        private void stopReadJohar()
+        public void StartVBLReading()
         {
-            tagdb.tagdbIsJohar = false;
-            tagdb.tagdbIsVBL = false;
-            tagdb.tagdbIsILian = false;
+            Console.WriteLine("### StartVBLReading");
+            _exitNow = false;
+            if (null == vblTagsCountDetectThread)
+            {
+                vblTagsCountDetectThread = new Thread(TagsCountDetect);
+                vblTagsCountDetectThread.IsBackground = true;
+                vblTagsCountDetectThread.Name = "#vblTagsCountDetectThread# " + (tid++);
+                vblTagsCountDetectThread.Start();
+            }
+            if (null == asyncReadThread)
+            {
+                asyncReadThread = new Thread(StartContinuousRead);
+                asyncReadThread.IsBackground = true;
+                asyncReadThread.Name = "#asyncReadThread# " + (tid++);
+                asyncReadThread.Start();
+            }
+        }
 
-            objReader.StopReading();
+        private void TagsCountDetect()
+        {
+            int _threadID = Thread.CurrentThread.ManagedThreadId;
+            string name = Thread.CurrentThread.Name;
+            Console.WriteLine("---> [" + _threadID + "] " + name);
+
+            long oldcount = 0;
+            long newcount = 0;
+            while (isStartRead)
+            {
+                if (IsCountChange)
+                {
+                    Dispatcher.BeginInvoke(new ThreadStart(delegate ()
+                    {
+                        sensortags_readingstatus_label.Content = "reading VBL sensortags ...";
+                    }));
+
+                    newcount = tagdb.UniqueTagCount;
+                    if (oldcount != 0 && newcount != 0 && oldcount == newcount)
+                    {
+                        IsCountChange = false;
+                        isReadingTune = true;
+                        isReadingNValue = false;
+                        oldcount = 0;
+                        newcount = 0;
+                        continue;
+                    }
+                    Thread.Sleep(5000);
+                    Console.WriteLine("IsCountChange=" + IsCountChange + ", " + oldcount + " vs " + newcount);
+                    oldcount = newcount;
+                }
+                else if (isReadingTune)
+                {
+                    Dispatcher.BeginInvoke(new ThreadStart(delegate ()
+                    {
+                        sensortags_readingstatus_label.Content = "reading TUNE of VBL sensortags ...";
+                    }));
+                    TagDatabase temp = tagdb;
+                    int count = temp.EpcIndex.Count;
+                    int i = 0;
+                    foreach (TagReadRecord trd in temp.EpcIndex.Values)
+                    {
+                        if (!trd.VBL_Tune.Trim().Equals(""))
+                            i++;
+                    }
+
+                    if (i == count)
+                    {
+                        isReadingTune = false;
+                        IsCountChange = false;
+                        isReadingNValue = true;
+                    }
+
+                    Thread.Sleep(3000);
+                    Console.WriteLine("isReadingTune=" + isReadingTune + ", " + i + " vs " + count);
+                }
+                else if (isReadingNValue)
+                {
+                    Dispatcher.BeginInvoke(new ThreadStart(delegate ()
+                    {
+                        sensortags_readingstatus_label.Content = "reading NValue of VBL sensor tags ...";
+                    }));
+                    TagDatabase temp = tagdb;
+                    int nullCount = 0;
+                    foreach (TagReadRecord trd in temp.EpcIndex.Values)
+                    {
+                        if (trd.VBL_Tune.Trim().Equals(""))
+                        {
+                            nullCount++;
+                        }
+                    }
+                    if (nullCount > 0)
+                    {
+                        Console.WriteLine("### nulCount= " + nullCount);
+                        IsCountChange = true;
+                        isReadingTune = false;
+                        isReadingNValue = false;
+                        continue;
+                    }
+                    Thread.Sleep(3000);
+                    Console.WriteLine("isReadingNValue=" + isReadingNValue);
+                }
+                else
+                {
+                    Thread.Sleep(500);
+                    Console.WriteLine("########  ");
+                }
+            }
+            Console.WriteLine("IsCountChange=" + IsCountChange + ", isReadingTune=" + isReadingTune + ", isReadingNValue=" + isReadingNValue);
+            Dispatcher.BeginInvoke(new ThreadStart(delegate ()
+            {
+                sensortags_readingstatus_label.Content = "Stop read ...";
+            }));
+            //IsCountChange = false;
+            //isReadingTune = false;
+            //isReadingNValue = false;
+            Console.WriteLine("end with TagsCountDetect ...  ");
+        }
+
+        private void StartContinuousRead()
+        {
+            Console.WriteLine("### StartContinuousRead");
+            int _threadID = Thread.CurrentThread.ManagedThreadId;
+            string name = Thread.CurrentThread.Name;
+            Console.WriteLine("----> [" + _threadID + "] " + name);
+
+            foreach (int ant in antennaList)
+            {
+                objReader.ParamSet("/reader/tagop/antenna", ant);
+                Console.WriteLine("VBL set antenna " + ant);
+            }
+
+            //int[] ants = new int[] { 1 };
+            //objReader.ParamSet("/reader/tagop/antenna", ants[0]);
+            int readTime = (int)objReader.ParamGet("/reader/read/asyncOnTime");
+            Console.WriteLine("############# readTime=" + readTime);
+
+            //E2 C19 CB1 VBL
+            byte[] tid_mask = new byte[] { 0xE2, 0xC1, 0x9c, 0xB1 };
+            TagFilter target = new Gen2.Select(false, Gen2.Bank.TID, 0, 32, tid_mask);
+
+            ReadPlan plan0 = new SimpleReadPlan(antennaList, TagProtocol.GEN2, target, null, false, 1000);
+
+            TagOp tagOp1 = new Gen2.ReadData(Gen2.Bank.USER, 31, 1);
+            ReadPlan plan1 = new SimpleReadPlan(antennaList, TagProtocol.GEN2, target, tagOp1, false, 1000);
+
+            TagOp tagOp2 = new Gen2.ReadData(Gen2.Bank.RESERVED, 8, 1);
+            ReadPlan plan2 = new SimpleReadPlan(antennaList, TagProtocol.GEN2, target, tagOp2, false, 1000);
+
+            objReader.TagRead += PrintTagreads;
+            objReader.ReadException += new EventHandler<ReaderExceptionEventArgs>(r_ReadException);
+
+            IsCountChange = true;
+            isReadingTune = false;
+            isReadingNValue = false;
+
+            while (!_exitNow)
+            {
+                try
+                {
+                    //读VBL标签
+                    if (IsCountChange)
+                    {
+                        Console.WriteLine("### start read tags");
+                        objReader.ParamSet("/reader/read/plan", plan0);
+                        Console.WriteLine("### set plan0 success");
+                        objReader.StartReading();
+
+                        while (IsCountChange)
+                        {
+                            Thread.Sleep(500);
+                        }
+                        objReader.StopReading();
+                        Console.WriteLine("### stop read tags");
+                    }
+
+                    //读Tune
+                    if (isReadingTune)
+                    {
+                        Console.WriteLine("### start read tune");
+                        lock (tagdb)
+                        {
+                            tagdb.SensorSubType = SensorSubType.VBL_TUNE;
+                        }
+
+                        objReader.ParamSet("/reader/read/plan", plan1);
+                        Console.WriteLine("### set plan1 user [31:1] success");
+                        objReader.StartReading();
+                        while (isReadingTune)
+                        {
+                            Thread.Sleep(500);
+                        }
+                        objReader.StopReading();
+                        Console.WriteLine("### stop read tune");
+                    }
+
+                    //读NValue
+                    if (isReadingNValue)
+                    {
+                        Console.WriteLine("### start read nValue");
+                        lock (tagdb)
+                        {
+                            tagdb.SensorSubType = SensorSubType.VBL_NValue;
+                        }
+
+                        objReader.ParamSet("/reader/read/plan", plan2);
+                        Console.WriteLine("### set plan2 reserved [8:1] success");
+                        objReader.StartReading();
+
+                        while (isReadingNValue)
+                        {
+                            Thread.Sleep(500);
+                        }
+                        objReader.StopReading();
+                        Console.WriteLine("### stop read nValue");
+                    }
+
+                }
+                catch (Exception ex)
+                {
+                    _exitNow = true;
+                    IsCountChange = true;
+                    isReadingTune = false;
+                    isReadingNValue = false;
+                    Console.WriteLine("### error : " + ex.ToString());
+                }
+            }
+            Console.WriteLine("### end with startReding");
+        }
+
+        private void stopReadVBL()
+        {
+            isStartRead = false;
+
+            IsCountChange = false;
+            isReadingTune = false;
+            isReadingNValue = false;
+
+            StopVBLReading();
+
+            objReader.ParamSet("/reader/gen2/target", originalTarget);
+        }
+
+        public void StopVBLReading()
+        {
+            Console.WriteLine("### StopReading");
+            _exitNow = true;
+            if (asyncReadThread != null)
+            {
+                asyncReadThread.Join();
+                asyncReadThread = null;
+                Console.WriteLine("###asyncReadThread Stop");
+            }
+
+            if (vblTagsCountDetectThread != null)
+            {
+                vblTagsCountDetectThread.Join();
+                vblTagsCountDetectThread = null;
+                Console.WriteLine("### vblTagsCountDetectThread Stop");
+            }
+
             objReader.TagRead -= PrintTagreads;
             objReader.ReadException -= new EventHandler<ReaderExceptionEventArgs>(r_ReadException);
-        }
 
+            Console.WriteLine("### Stop done");
+        }
+        #endregion //VBl
+
+        #region Johar
         private void startReadJohar()
         {
-            tagdb.tagdbIsJohar = true;
-            tagdb.tagdbIsVBL = false;
-            tagdb.tagdbIsILian = false;
+            tagdb.SensorType = SensorType.Johar;
+            tagdb.SensorSubType = SensorSubType.NONE;
+
             foreach (int ant in antennaList)
             {
                 objReader.ParamSet("/reader/tagop/antenna", ant);
@@ -662,501 +1120,14 @@ namespace ThingMagic.URA2.UI.UserControls
             objReader.StartReading();
             Console.WriteLine("****** startReading...");
         }
-
-        private void r_ReadException(object sender, ReaderExceptionEventArgs e)
+        private void stopReadJohar()
         {
-            Console.WriteLine("Error: " + e.ReaderException.Message);
-            MessageBox.Show(e.ReaderException.Message, e.ReaderException.ToString(), MessageBoxButton.OK, MessageBoxImage.Error);
-        }
-
-        private void PrintTagreads(Object sender, TagReadDataEventArgs e)
-        {
-            //Console.WriteLine(Tags + " ### EPC[" + e.TagReadData.EpcString + "]");
-            Dispatcher.BeginInvoke(new ThreadStart(delegate ()
-            {
-                tagdb.Add(e.TagReadData);
-            }));
-
-            Dispatcher.BeginInvoke(new ThreadStart(delegate ()
-            {
-                tagdb.Repaint();
-            }));
-
-            Dispatcher.BeginInvoke(new ThreadStart(delegate ()
-            {
-                total_sensortags_read_count.Content = tagdb.TotalTagCount.ToString();
-                unique_sensortags_count.Content = tagdb.UniqueTagCount.ToString();
-            }
-            ));
-        }
-
-        private static int byteArrayToInt(byte[] data, int offset)
-        {
-            int value = 0;
-            int len = data.Length;
-            for (int count = 0; count < len; count++)
-            {
-                value <<= 8;
-                value ^= (data[count + offset] & 0x000000FF);
-            }
-            return value;
-        }
-
-        internal void ResetSensorTagsTab()
-        {
-            Console.WriteLine(Tags + "### ResetSensorTagsTab");
-            if(temp_read_button.Content.Equals("Stop"))
-            {
-                temp_read_button.Content = "Read";
-                objReader.StopReading();
-                objReader.TagRead -= PrintTagreads;
-                objReader.ReadException -= new EventHandler<ReaderExceptionEventArgs>(r_ReadException);
-            }
-        }
-
-        private void Temp_clear_button_Click(object sender, RoutedEventArgs e)
-        {
-            Dispatcher.BeginInvoke(new ThreadStart(delegate ()
-            {
-                tagdb.Clear();
-                tagdb.Repaint();
-            }));
-            Dispatcher.Invoke(new ThreadStart(delegate ()
-            {
-                unique_sensortags_count.Content = "0";
-                total_sensortags_read_count.Content = "0";
-            }));
-        }
-
-        void PrintTagReadHandler(Object sender, TagReadDataEventArgs e)
-        {
-            PrintTagRead(e.TagReadData);
-        }
-
-        void PrintTagReads(TagReadData[] reads)
-        {
-            foreach (TagReadData read in reads)
-            {
-                PrintTagRead(read);
-            }
-        }
-
-        void PrintTagRead(TagReadData read)
-        {
-            List<string> strl = new List<string>();
-            strl.Add("EPC: " +read.EpcString);
-            if(read.RESERVEDMemData.Length > 0)
-            {
-                strl.Add(",ReservedData: " + ByteFormat.ToHex(read.RESERVEDMemData));
-            }
-            if (read.USERMemData.Length > 0)
-            {
-                strl.Add(",UserData: " + ByteFormat.ToHex(read.USERMemData));
-            }
-            if (read.Data.Length > 0)
-            {
-                strl.Add(",Data: " + ByteFormat.ToHex(read.Data));
-            }
-            Console.WriteLine(String.Join(" ", strl.ToArray()));
-        }
-
-        #region StartReading
-        
-        /// <summary>
-        /// Start reading RFID tags in the background. The tags found will be
-        /// passed to the registered read listeners, and any exceptions that
-        /// occur during reading will be passed to the registered exception
-        /// listeners. Reading will continue until stopReading() is called.
-        /// </summary>
-        public void StartReading()
-        {
-            Console.WriteLine("### StartReading");
-            _exitNow = false;
-            if(null == vblTagsCountDetectThread)
-            {
-                vblTagsCountDetectThread = new Thread(TagsCountDetect);
-                vblTagsCountDetectThread.IsBackground = true;
-                vblTagsCountDetectThread.Name = "#vblTagsCountDetectThread# " + (tid++);
-                vblTagsCountDetectThread.Start();
-            }
-            if (null == asyncReadThread)
-            {
-                asyncReadThread = new Thread(StartContinuousRead);
-                asyncReadThread.IsBackground = true;
-                asyncReadThread.Name = "#asyncReadThread# " + (tid++);
-                asyncReadThread.Start();
-            }
-            
-            //waitUntilReadMethodCalled.WaitOne();
-        }
-        
-        private void StartContinuousRead()
-        {
-            Console.WriteLine("### StartContinuousRead");
-            int _threadID = Thread.CurrentThread.ManagedThreadId;
-            string name = Thread.CurrentThread.Name;
-            Console.WriteLine("----> [" + _threadID + "] " + name);
-
-            foreach(int ant in antennaList)
-            {
-                objReader.ParamSet("/reader/tagop/antenna", ant);
-                Console.WriteLine("VBL set antenna " + ant);
-            }
-
-            //int[] ants = new int[] { 1 };
-            //objReader.ParamSet("/reader/tagop/antenna", ants[0]);
-            int readTime = (int)objReader.ParamGet("/reader/read/asyncOnTime");
-            Console.WriteLine("############# readTime=" + readTime);
-            
-            //E2 C19 CB1 VBL
-            byte[] tid_mask = new byte[] { 0xE2, 0xC1, 0x9c, 0xB1 };
-            TagFilter target = new Gen2.Select(false, Gen2.Bank.TID, 0, 32, tid_mask);
-            
-            ReadPlan plan0 = new SimpleReadPlan(antennaList, TagProtocol.GEN2, target, null, false, 1000);
-
-            TagOp tagOp1 = new Gen2.ReadData(Gen2.Bank.USER, 31, 1);
-            ReadPlan plan1 = new SimpleReadPlan(antennaList, TagProtocol.GEN2, target, tagOp1, false, 1000);
-
-            TagOp tagOp2 = new Gen2.ReadData(Gen2.Bank.RESERVED, 8, 1);
-            ReadPlan plan2 = new SimpleReadPlan(antennaList, TagProtocol.GEN2, target, tagOp2, false, 1000);
-            
-            objReader.TagRead += PrintTagreads;
-            objReader.ReadException += new EventHandler<ReaderExceptionEventArgs>(r_ReadException);
-
-            IsCountChange = true;
-            isReadingTune = false;
-            isReadingNValue = false;
-
-            while (!_exitNow)
-            {
-                try
-                {
-                    //读VBL标签
-                    if (IsCountChange)
-                    {
-                        Console.WriteLine("### start read tags");
-                        objReader.ParamSet("/reader/read/plan", plan0);
-                        Console.WriteLine("### set plan0 success");
-                        objReader.StartReading();
-                        
-                        while (IsCountChange)
-                        {
-                            Thread.Sleep(500);
-                        }
-                        objReader.StopReading();
-                        Console.WriteLine("### stop read tags");
-                    }
-
-                    //读Tune
-                    if(isReadingTune)
-                    {
-                        Console.WriteLine("### start read tune");
-                        lock (tagdb)
-                        {
-                            tagdb.tagdbIsVBL_Tune = true;
-                            tagdb.tagdbIsVBL_NValue = false;
-                        }
-
-                        objReader.ParamSet("/reader/read/plan", plan1);
-                        Console.WriteLine("### set plan1 user [31:1] success");
-                        objReader.StartReading();
-                        while (isReadingTune)
-                        {
-                            Thread.Sleep(500);
-                        }
-                        objReader.StopReading();
-                        Console.WriteLine("### stop read tune");
-                    }
-
-                    //读NValue
-                    if(isReadingNValue)
-                    {
-                        Console.WriteLine("### start read nValue");
-                        lock (tagdb)
-                        {
-                            tagdb.tagdbIsVBL_Tune = false;
-                            tagdb.tagdbIsVBL_NValue = true;
-                        }
-
-                        objReader.ParamSet("/reader/read/plan", plan2);
-                        Console.WriteLine("### set plan2 reserved [8:1] success");
-                        objReader.StartReading();
-
-                        while (isReadingNValue)
-                        {
-                            Thread.Sleep(500);
-                        }
-                        objReader.StopReading();
-                        Console.WriteLine("### stop read nValue");
-                    }
-
-                }
-                catch (Exception ex)
-                {
-                    _exitNow = true;
-                    IsCountChange = true;
-                    isReadingTune = false;
-                    isReadingNValue = false;
-                    Console.WriteLine("### error : " + ex.ToString());
-                    //waitUntilReadMethodCalled.Set();
-                }
-            }
-            Console.WriteLine("### end with startReding");
-        }
-
-        private void TagsCountDetect()
-        {
-            int _threadID = Thread.CurrentThread.ManagedThreadId;
-            string name = Thread.CurrentThread.Name;
-            Console.WriteLine("---> [" + _threadID + "] " + name);
-
-            long oldcount = 0;
-            long newcount = 0;
-            while (isStartRead)
-            {
-                if(IsCountChange)
-                {
-                    Dispatcher.BeginInvoke(new ThreadStart(delegate ()
-                    {
-                        sensortags_readingstatus_label.Content = "reading VBL sensortags ...";
-                    }));
-                    
-                    newcount = tagdb.UniqueTagCount;
-                    if (oldcount != 0 && newcount != 0 && oldcount == newcount)
-                    {
-                        IsCountChange = false;
-                        isReadingTune = true;
-                        isReadingNValue = false;
-                        oldcount = 0;
-                        newcount = 0;
-                        continue;
-                    }
-                    Thread.Sleep(5000);
-                    Console.WriteLine("IsCountChange=" + IsCountChange + ", " + oldcount + " vs " + newcount);
-                    oldcount = newcount;
-                }
-                else if(isReadingTune)
-                {
-                    Dispatcher.BeginInvoke(new ThreadStart(delegate ()
-                    {
-                        sensortags_readingstatus_label.Content = "reading TUNE of VBL sensortags ...";
-                    }));
-                    TagDatabase temp = tagdb;
-                    int count = temp.EpcIndex.Count;
-                    int i = 0;
-                    foreach (TagReadRecord trd in temp.EpcIndex.Values)
-                    {
-                        if (!trd.VBL_Tune.Trim().Equals(""))
-                            i++;
-                    }
-
-                    if (i == count)
-                    {
-                        isReadingTune = false;
-                        IsCountChange = false;
-                        isReadingNValue = true;
-                    }
-
-                    Thread.Sleep(3000);
-                    Console.WriteLine("isReadingTune=" + isReadingTune + ", " + i + " vs " + count);
-                }
-                else if(isReadingNValue)
-                {
-                    Dispatcher.BeginInvoke(new ThreadStart(delegate ()
-                    {
-                        sensortags_readingstatus_label.Content = "reading NValue of VBL sensor tags ...";
-                    }));
-                    TagDatabase temp = tagdb;
-                    int nullCount = 0;
-                    foreach (TagReadRecord trd in temp.EpcIndex.Values)
-                    {
-                        if (trd.VBL_Tune.Trim().Equals(""))
-                        {
-                            nullCount++;
-                        }
-                    }
-                    if(nullCount>0)
-                    {
-                        Console.WriteLine("### nulCount= " + nullCount);
-                        IsCountChange = true;
-                        isReadingTune = false;
-                        isReadingNValue = false;
-                        continue;
-                    }
-                    Thread.Sleep(3000);
-                    Console.WriteLine("isReadingNValue=" + isReadingNValue);
-                }
-                else
-                {
-                    Thread.Sleep(500);
-                    Console.WriteLine("########  ");
-                }
-            }
-            Console.WriteLine("IsCountChange="+ IsCountChange + ", isReadingTune="+ isReadingTune + ", isReadingNValue=" + isReadingNValue);
-            Dispatcher.BeginInvoke(new ThreadStart(delegate ()
-            {
-                sensortags_readingstatus_label.Content = "Stop read ...";
-            }));
-            //IsCountChange = false;
-            //isReadingTune = false;
-            //isReadingNValue = false;
-            Console.WriteLine("end with TagsCountDetect ...  ");
-        }
-
-        #endregion
-
-        #region StopReading
-
-        /// <summary>
-        /// Stop reading RFID tags in the background.
-        /// </summary>
-        public void StopReading()
-        {
-            Console.WriteLine("### StopReading");
-            _exitNow = true;
-            if (asyncReadThread != null)
-            {
-                asyncReadThread.Join();
-                asyncReadThread = null;
-                Console.WriteLine("###asyncReadThread Stop");
-            }
-
-            if (vblTagsCountDetectThread != null)
-            {
-                vblTagsCountDetectThread.Join();
-                vblTagsCountDetectThread = null;
-                Console.WriteLine("### vblTagsCountDetectThread Stop");
-            }
-
+            Console.WriteLine("StopReading ...");
+            objReader.StopReading();
             objReader.TagRead -= PrintTagreads;
             objReader.ReadException -= new EventHandler<ReaderExceptionEventArgs>(r_ReadException);
-
-            //waitUntilReadMethodCalled.Reset();
-            Console.WriteLine("### Stop done");
         }
-        
-        #endregion
-
-        #region Read
-        /// <summary>
-        /// Read RFID tags for a fixed duration.
-        /// </summary>
-        /// <param name="timeout">the time to spend reading tags, in milliseconds</param>
-        /// <returns>the tags read</returns>
-        public TagReadData[] Read(int timeout, ReadPlan readPlan)
-        {
-            Console.WriteLine("### Read");
-            if(readPlan == null)
-            {
-                readPlan = (ReadPlan)objReader.ParamGet("/reader/read/plan");
-            }
-
-            if (timeout < 0)
-                throw new ArgumentOutOfRangeException("Timeout (" + timeout.ToString() + ") must be greater than or equal to 0");
-
-            else if (timeout > 65535)
-                throw new ArgumentOutOfRangeException("Timeout (" + timeout.ToString() + ") must be less than 65536");
-
-            List<TagReadData> tagReads = new List<TagReadData>();
-            
-            ReadInternal((UInt16)timeout, readPlan, ref tagReads);
-
-            return tagReads.ToArray();
-        }
-        #endregion
-
-        #region ReadInternal
-        private void ReadInternal(UInt16 timeout, ReadPlan rp, ref List<TagReadData> tagReads)
-        {
-            Console.WriteLine("### ReadInternal");
-            if ((rp is SimpleReadPlan))
-            {
-                DateTime now = DateTime.Now;
-                DateTime endTime = now.AddMilliseconds(timeout);
-
-                while (now <= endTime)
-                {
-                    TimeSpan totalTagFetchTime = new TimeSpan();
-                    TimeSpan timeElapsed = endTime - now;
-                    timeout = ((ushort)timeElapsed.TotalMilliseconds < 65535) ? (ushort)timeElapsed.TotalMilliseconds : (ushort)65535;
-
-                    try
-                    {
-                        objReader.ParamSet("/reader/read/plan", rp);
-                        TagReadData[] trds = objReader.Read(timeout);
-                        tagReads.AddRange(trds);
-                    }
-                    catch (ReaderException ex)
-                    {
-                        throw;
-                    }
-
-                    now = DateTime.Now - totalTagFetchTime;
-                }
-            }
-            else
-                Console.WriteLine("Unsupported read plan: " + rp.GetType().ToString());
-        }
-        #endregion
-
-
-        private void SensortagChange(String langName)
-        {
-            Console.WriteLine("select = " + langName);
-            if (langName.Equals("Johar"))
-            {
-                Dispatcher.BeginInvoke(new ThreadStart(delegate ()
-                {
-                    //Johar E2 035 106
-                    class_id_label.Content = "E2";
-                    vendor_id_label.Content = "035";
-                    model_id_label.Content = "106";
-                }));
-            }
-            else if (langName.Equals("VBL"))
-            {
-                Dispatcher.BeginInvoke(new ThreadStart(delegate ()
-                {
-                    //VBL E2 C19 CB1
-                    class_id_label.Content = "E2";
-                    vendor_id_label.Content = "C19";
-                    model_id_label.Content = "CB1";
-                }));
-            }
-            else if (langName.Equals("iLian"))
-            {
-                Dispatcher.BeginInvoke(new ThreadStart(delegate ()
-                {
-                    //iLian 32 14E 0B0
-                    class_id_label.Content = "32";
-                    vendor_id_label.Content = "14E";
-                    model_id_label.Content = "0B0";
-                }));
-            }
-            else if (langName.Equals("rfMicro"))
-            {
-                Dispatcher.BeginInvoke(new ThreadStart(delegate ()
-                {
-                    //RF micro E2 824 03B
-                    class_id_label.Content = "E2";
-                    vendor_id_label.Content = "824";
-                    model_id_label.Content = "03B";
-                }));
-            }
-        }
-
-        private void sensortag_combobox_SelectionChanged(object sender, SelectionChangedEventArgs e)
-        {
-            string langName = sensortag_combobox.SelectedValue.ToString();
-            Console.WriteLine(String.Format("selected item={0}", langName));
-            SensortagChange(langName);
-        }
-
-        private void Button_Click(object sender, RoutedEventArgs e)
-        {
-            
-            GetRFMicroTemp("BD9F88A7E1477900", 2315);
-        }
+        #endregion Johar
     }
 
     public class CategoryInfo
