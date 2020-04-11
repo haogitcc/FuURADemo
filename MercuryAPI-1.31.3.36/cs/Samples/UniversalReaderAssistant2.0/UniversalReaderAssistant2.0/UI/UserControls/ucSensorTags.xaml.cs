@@ -91,12 +91,12 @@ namespace ThingMagic.URA2.UI.UserControls
             dataColumn.Header = "Data";
             dataColumn.Width = new DataGridLength(1, DataGridLengthUnitType.Auto);
 
-            tuneColumn.Binding = new Binding("VBL_Tune");
-            tuneColumn.Header = "Tune";
+            tuneColumn.Binding = new Binding("TuneValue");
+            tuneColumn.Header = "TuneValue";
             tuneColumn.Width = new DataGridLength(1, DataGridLengthUnitType.Auto);
 
-            nValueColumn.Binding = new Binding("VBL_NValue");
-            nValueColumn.Header = "NValue";
+            nValueColumn.Binding = new Binding("TemperatureCode");
+            nValueColumn.Header = "TemperatureCode";
             nValueColumn.Width = new DataGridLength(1, DataGridLengthUnitType.Auto);
 
             TemperatureColumn.Binding = new Binding("Temperature"); 
@@ -438,35 +438,52 @@ namespace ThingMagic.URA2.UI.UserControls
 
         private void startReadRFMicro()
         {
+            
+            //E2 824 03B RF Micron Magnus-S3
+            byte[] tid_mask = new byte[] { 0xE2, 0x82, 0x40, 0x3B };
+            
             if (sensorCode_checkbox.IsChecked.Value == true)
             {
+                Gen2.Select tid_filter = new Gen2.Select(false, Gen2.Bank.TID, 0, 32, tid_mask);
+                tid_filter.target = Gen2.Select.Target.Select;
+                tid_filter.action = Gen2.Select.Action.ON_N_OFF;
                 //Define a tag read operation which reads from a Magnus-S3 403h 
                 //Sensor Code in Reserved bank, in memory hex C
                 TagOp sensorCodeRead = new Gen2.ReadData(Gen2.Bank.RESERVED, 0xC, 1);
-                SimpleReadPlan readPlan = new SimpleReadPlan(antennaList, TagProtocol.GEN2, null, sensorCodeRead, true, 100);
+                SimpleReadPlan readPlan = new SimpleReadPlan(antennaList, TagProtocol.GEN2, tid_filter, sensorCodeRead, true, 100);
                 objReader.ParamSet("/reader/read/plan", readPlan);
 
                 asyncReadRFMicronMagnusS3(SensorType.RFMicronMagnusS3, SensorSubType.RFMicroMagnusS3_SensorCode);
             }
             else if (onChipRSSI_checkbox.IsChecked.Value == true)
             {
+                Gen2.Select tid_filter = new Gen2.Select(false, Gen2.Bank.TID, 0, 32, tid_mask);
+                tid_filter.target = Gen2.Select.Target.Select;
+                tid_filter.action = Gen2.Select.Action.ON_N_OFF;
+                MultiFilter multifilter = null;
                 //Define a Select command which applies to a Magnus-S3 403h 
                 //We want all tags to respond, regardless of their On-Chip RSSI Code Value
                 //so our select mask should ba a hex value of 1F
                 byte[] mask = { Convert.ToByte("1F", 16) };
                 //Select User memory bank and pointer value bit address of hex D0
                 Gen2.Select select = new Gen2.Select(false, Gen2.Bank.USER, 0xD0, 8, mask);
+                select.target = Gen2.Select.Target.Select;
+                select.action = Gen2.Select.Action.ON_N_OFF;
+                multifilter = new MultiFilter(new TagFilter[] { tid_filter, select });
                 //The On-Chip RSSI Code in the Reserved bank, word location hex D
                 TagOp onChipRSSICodeRead = new Gen2.ReadData(Gen2.Bank.RESERVED, 0xD, 1);
-                SimpleReadPlan readPlan = new SimpleReadPlan(antennaList, TagProtocol.GEN2, select, onChipRSSICodeRead, true, 100);
+                SimpleReadPlan readPlan = new SimpleReadPlan(antennaList, TagProtocol.GEN2, multifilter, onChipRSSICodeRead, true, 100);
                 objReader.ParamSet("/reader/read/plan", readPlan);
 
                 asyncReadRFMicronMagnusS3(SensorType.RFMicronMagnusS3, SensorSubType.RFMicroMagnusS3_OnChipRSSI);
             }
             else if (calibratedCode_checkbox.IsChecked.Value == true)
             {
+                Gen2.Select tid_filter = new Gen2.Select(false, Gen2.Bank.TID, 0, 32, tid_mask);
+                tid_filter.target = Gen2.Select.Target.Select;
+                tid_filter.action = Gen2.Select.Action.ON_N_OFF;
                 TagOp Calibrated = new Gen2.ReadData(Gen2.Bank.USER, 0x8, 4);
-                SimpleReadPlan readPlan = new SimpleReadPlan(antennaList, TagProtocol.GEN2, null, Calibrated, true, 100);
+                SimpleReadPlan readPlan = new SimpleReadPlan(antennaList, TagProtocol.GEN2, tid_filter, Calibrated, true, 100);
                 objReader.ParamSet("/reader/read/plan", readPlan);
 
                 asyncReadRFMicronMagnusS3(SensorType.RFMicronMagnusS3, SensorSubType.RFMicroMagnusS3_CalibratedCode);
@@ -483,13 +500,21 @@ namespace ThingMagic.URA2.UI.UserControls
                 UInt32 time = 30000;
                 objReader.ParamSet("/reader/gen2/t4", time);
 
+                Gen2.Select tid_filter = new Gen2.Select(false, Gen2.Bank.TID, 0, 32, tid_mask);
+                tid_filter.target = Gen2.Select.Target.Select;
+                tid_filter.action = Gen2.Select.Action.ON_N_OFF;
+                MultiFilter multifilter = null;
+
                 //Define a Select command which applies to a Magnus-S3 403h 
                 //select mask should ba a hex value of USER hex of E0, mask length is zero
                 Gen2.Select select = new Gen2.Select(false, Gen2.Bank.USER, 0xE0, 0, new byte[0]);
+                select.target = Gen2.Select.Target.Select;
+                select.action = Gen2.Select.Action.ON_N_OFF;
+                multifilter = new MultiFilter(new TagFilter[] { tid_filter, select });
                 //After the tag has recived the Select Command
                 //the Temperature Code in the , Reserved bank occupies the least-significant 12 bits of the word location of hex Reserved E
                 TagOp temperatureCodeRead = new Gen2.ReadData(Gen2.Bank.RESERVED, 0xE, 1);
-                SimpleReadPlan readPlan = new SimpleReadPlan(antennaList, TagProtocol.GEN2, select, temperatureCodeRead, true, 100);
+                SimpleReadPlan readPlan = new SimpleReadPlan(antennaList, TagProtocol.GEN2, multifilter, temperatureCodeRead, true, 100);
                 objReader.ParamSet("/reader/read/plan", readPlan);
 
                 asyncReadRFMicronMagnusS3(SensorType.RFMicronMagnusS3, SensorSubType.RFMicroMagnusS3_TemperatureCode);
@@ -846,7 +871,7 @@ namespace ThingMagic.URA2.UI.UserControls
                     int i = 0;
                     foreach (TagReadRecord trd in temp.EpcIndex.Values)
                     {
-                        if (!trd.VBL_Tune.Trim().Equals(""))
+                        if (!trd.TuneValue.Trim().Equals(""))
                             i++;
                     }
 
@@ -870,7 +895,7 @@ namespace ThingMagic.URA2.UI.UserControls
                     int nullCount = 0;
                     foreach (TagReadRecord trd in temp.EpcIndex.Values)
                     {
-                        if (trd.VBL_Tune.Trim().Equals(""))
+                        if (trd.TuneValue.Trim().Equals(""))
                         {
                             nullCount++;
                         }

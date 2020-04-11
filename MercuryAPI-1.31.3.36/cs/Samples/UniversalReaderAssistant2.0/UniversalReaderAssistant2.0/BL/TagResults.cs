@@ -65,15 +65,15 @@ namespace ThingMagic.URA2.BL
             {
                 if (sensorSubType == SensorSubType.VBL_TUNE)
                 {
-                    if (VBL_Tune.Trim().Equals(""))
-                        VBL_Tune = ByteFormat.ToHex(mergeData.Data, "", "");
+                    if (tuneValue.Trim().Equals(""))
+                        tuneValue = ByteFormat.ToHex(mergeData.Data, "", "");
                 }
                 else if (sensorSubType == SensorSubType.VBL_NValue)
                 {
-                    VBL_NValue = ByteFormat.ToHex(mergeData.Data, "", "");
-                    if(!VBL_Tune.Trim().Equals("")&&!VBL_NValue.Trim().Equals(""))
+                    temperatureCodeValue = ByteFormat.ToHex(mergeData.Data, "", "");
+                    if(!tuneValue.Trim().Equals("") && !temperatureCodeValue.Trim().Equals(""))
                     {
-                        double temp = getVBLTemp(VBL_Tune, VBL_NValue, mergeData);
+                        double temp = getVBLTemp(tuneValue, temperatureCodeValue, mergeData);
                         if(temp != UNSPECTTEMP)
                             temperature = temp;
                     }
@@ -87,17 +87,119 @@ namespace ThingMagic.URA2.BL
             }
             else if (sensorType == SensorType.RFMicronMagnusS3)
             {
-                double temp = getRFMicronMagnusS3Temp(mergeData);
-                if (temp != UNSPECTTEMP)
-                    temperature = temp;
+                if (sensorSubType == SensorSubType.RFMicroMagnusS3_CalibratedCode)
+                {
+                    if (tuneValue.Trim().Equals(""))
+                        tuneValue = ByteFormat.ToHex(mergeData.Data, "", "");
+                }
+                else if (sensorSubType == SensorSubType.RFMicroMagnusS3_TemperatureCode)
+                {
+                    temperatureCodeValue = ByteFormat.ToHex(mergeData.Data, "", "");
+                    if (!tuneValue.Trim().Equals("") && !temperatureCodeValue.Trim().Equals(""))
+                    {
+                        double temp = getRFMicronMagnusS3Temp(tuneValue, temperatureCodeValue, mergeData);
+                        if (temp != UNSPECTTEMP)
+                            temperature = temp;
+                    }
+                }
             }
 
             OnPropertyChanged(null);
         }
 
-        private double getRFMicronMagnusS3Temp(TagReadData mergeData)
+        private double getRFMicronMagnusS3Temp(string TuneValue, string TemperatureCode, TagReadData mergeData)
         {
-            return 0;
+            double temp = 0.0;
+            if (TemperatureCode.Length < 4)
+                return temp;
+            int TEMP_CODE = Convert.ToInt32(TemperatureCode, 16) & 0x00000FFF;
+            return GetRFMicroTemp(TuneValue, TEMP_CODE);
+        }
+
+        private double GetRFMicroTemp(string CalibratedCode, int TEMP_CODE)
+        {
+            if (CalibratedCode == null || CalibratedCode.Length < 16)
+                return 0.0;
+            String USER_8H = CalibratedCode.Substring(0, 4);
+            String USER_9H = CalibratedCode.Substring(4, 4);
+            String USER_AH = CalibratedCode.Substring(8, 4);
+            String USER_BH = CalibratedCode.Substring(12, 4);
+            Console.WriteLine(string.Format("USER_8H={0}, USER_9H={1}, USER_AH={2}, USER_BH={3}", USER_8H, USER_9H, USER_AH, USER_BH));
+
+            int CRC = Convert.ToInt32(USER_8H, 16) & 0x0000FFFF;
+            int tempCRC = Convert.ToInt32(CRC16(CalibratedCode.Substring(4, 12)), 16);
+            int CODE1 = (Convert.ToInt32(USER_9H, 16) & 0x0000FFF0) >> 4;
+            int TEMP1 = (Convert.ToInt32(USER_9H, 16) & 0x0000000F) << 7 | ((Convert.ToInt32(USER_AH, 16) & 0x0000FE00) >> 9);
+            int CODE2 = (Convert.ToInt32(USER_AH, 16) & 0x000001FF) << 3 | ((Convert.ToInt32(USER_BH, 16) & 0x0000E000) >> 13);
+            int TEMP2 = (Convert.ToInt32(USER_BH, 16) & 0x00001FFC) >> 2;
+            int VER = (Convert.ToInt32(USER_BH, 16) & 0x00000003);
+
+            double TEMP1_in_Celsius = CalculateTempInCelsius(TEMP1);
+            double TEMP2_in_Celsius = CalculateTempInCelsius(TEMP2);
+
+            double TEMP_in_Celsius = CalculateTempInCelsius(CODE1, CODE2, TEMP1, TEMP2, TEMP_CODE);
+
+            Console.WriteLine(string.Format("CRC    ={0}", CRC));
+            Console.WriteLine(string.Format("tempCRC={0}", tempCRC));
+            Console.WriteLine(string.Format("CODE1={0}, TEMP1={1}", CODE1, TEMP1));
+            Console.WriteLine(string.Format("CODE2={0}, TEMP2={1}", CODE2, TEMP2));
+            Console.WriteLine(string.Format("VER={0}", VER));
+            Console.WriteLine(string.Format("TEMP_CODE={0}", TEMP_CODE));
+
+            Console.WriteLine(string.Format("TEMP1_in_Celsius={0}", TEMP1_in_Celsius));
+            Console.WriteLine(string.Format("TEMP2_in_Celsius={0}", TEMP2_in_Celsius));
+            Console.WriteLine(string.Format("TEMP_in_Celsius={0}", TEMP_in_Celsius));
+            Console.WriteLine("============================");
+            return Math.Round(TEMP_in_Celsius, 2);
+        }
+
+        private string CRC16(string dataHexString)
+        {
+            int numBytes = dataHexString.Length / 2;
+            byte[] dataByteArray = new byte[numBytes];
+            for (int b = 0; b < numBytes; b++)
+            {
+                dataByteArray[numBytes - 1 - b] = Convert.ToByte(dataHexString.Substring(2 * b, 2), 16);
+            }
+            BitArray data = new BitArray(dataByteArray);
+            BitArray CRC = new BitArray(16);
+            CRC.SetAll(true);
+            for (int j = data.Length - 1; j >= 0; j--)
+            {
+                bool newBit = CRC[15] ^ data[j];
+                for (int i = 15; i >= 1; i--)
+                {
+                    if (i == 12 || i == 15)
+                    {
+                        CRC[i] = CRC[i - 1] ^ newBit;
+                    }
+                    else
+                    {
+                        CRC[i] = CRC[i - 1];
+                    }
+                }
+                CRC[0] = newBit;
+            }
+            CRC.Not();
+            byte[] CRCbytes = new byte[2];
+            CRC.CopyTo(CRCbytes, 0);
+
+            string CRCword = Convert.ToString(CRCbytes[1], 16).PadLeft(2, '0')
+                + Convert.ToString(CRCbytes[0], 16).PadLeft(2, '0');
+            return CRCword;
+        }
+
+        private double CalculateTempInCelsius(int CODE1, int CODE2, int TEMP1, int TEMP2, int TEMP_CODE)
+        {
+            double temp = TEMP2 - TEMP1;
+            double code = CODE2 - CODE1;
+            double c_code1 = TEMP_CODE - CODE1;
+            return (temp / code * c_code1 + TEMP1 - 800) / 10.0;
+        }
+
+        private double CalculateTempInCelsius(int temp)
+        {
+            return (temp - 800) / 10.0;
         }
 
         public UInt32 SerialNumber
@@ -280,8 +382,16 @@ namespace ThingMagic.URA2.BL
             }
         }
 
-        public string VBL_Tune { get; set; } = "";
-        public string VBL_NValue { get; set; } = "";
+        public string TuneValue 
+        {
+            get { return tuneValue; } 
+            set { tuneValue = value; }
+        }
+        public string TemperatureCode
+        {
+            get { return temperatureCodeValue; }
+            set { temperatureCodeValue = value; }
+        }
 
         private double getILianTemp(TagReadData RawRead)
         {
@@ -352,6 +462,9 @@ namespace ThingMagic.URA2.BL
 
         string old_NValue = "";
         private double UNSPECTTEMP = -100.0;
+        private string tuneValue = "";
+        private string temperatureCodeValue = "";
+
         private double getVBLTemp(string Tune, string NValue, TagReadData mergeData)
         {
             double temp = UNSPECTTEMP;
@@ -550,16 +663,16 @@ namespace ThingMagic.URA2.BL
                     });
                     break;
 
-                case "VBL_Tune":
+                case "TuneValue":
                     comparer = new Comparison<TagReadRecord>(delegate (TagReadRecord a, TagReadRecord b)
                     {
-                        return String.Compare(a.VBL_Tune, b.VBL_Tune);
+                        return String.Compare(a.TuneValue, b.TuneValue);
                     });
                     break;
-                case "VBL_NValue":
+                case "TemperatureCode":
                     comparer = new Comparison<TagReadRecord>(delegate (TagReadRecord a, TagReadRecord b)
                     {
-                        return String.Compare(a.VBL_NValue, b.VBL_NValue);
+                        return String.Compare(a.TemperatureCode, b.TemperatureCode);
                     });
                     break;
             }
@@ -724,17 +837,23 @@ namespace ThingMagic.URA2.BL
                     {
                         if (tagdbSensorSubType == SensorSubType.VBL_TUNE)
                         {
-                            if (EpcIndex[key].VBL_Tune.Trim().Equals(""))
-                                EpcIndex[key].VBL_Tune = ByteFormat.ToHex(addData.Data, "", "");
+                            if (EpcIndex[key].TuneValue.Trim().Equals(""))
+                                EpcIndex[key].TuneValue = ByteFormat.ToHex(addData.Data, "", "");
                         }
                         else if (tagdbSensorSubType == SensorSubType.VBL_NValue)
                         {
-                            EpcIndex[key].VBL_NValue = ByteFormat.ToHex(addData.Data, "", "");
+                            EpcIndex[key].TemperatureCode = ByteFormat.ToHex(addData.Data, "", "");
                         }
                     }
                     if(tagdbSensorType == SensorType.RFMicronMagnusS3)
                     {
-                       
+                        if (tagdbSensorSubType == SensorSubType.RFMicroMagnusS3_CalibratedCode)
+                        {
+                            if (EpcIndex[key].TuneValue.Trim().Equals(""))
+                                EpcIndex[key].TuneValue = ByteFormat.ToHex(addData.Data, "", "");
+                            else if(tagdbSensorSubType == SensorSubType.RFMicroMagnusS3_TemperatureCode)
+                                EpcIndex[key].TemperatureCode = ByteFormat.ToHex(addData.Data, "", "");
+                        }
                     }
 
                     EpcIndex[key].Update(addData); //ToDo update temperature
