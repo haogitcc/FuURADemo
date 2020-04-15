@@ -49,7 +49,8 @@ namespace ThingMagic.URA2.UI.UserControls
             sensortag_combobox.DisplayMemberPath = "Name";//显示出来的值
             sensortag_combobox.SelectedValuePath = "Value";//实际选中后获取的结果的值
 
-            categoryList.Add(new CategoryInfo { Name = "悦和", Value = "Johar" });
+            categoryList.Add(new CategoryInfo { Name = "[悦和][LTU32][106]", Value = "Johar_106" });//TSC303005-C3音叉式传感器
+            categoryList.Add(new CategoryInfo { Name = "[悦和][LTU32][101]", Value = "Johar_101" });
             categoryList.Add(new CategoryInfo { Name = "VBL", Value = "VBL" });
             categoryList.Add(new CategoryInfo { Name = "宜链", Value = "iLian" });
             categoryList.Add(new CategoryInfo { Name = "RF Micro Magnus S3", Value = "rfMicro" });
@@ -274,7 +275,8 @@ namespace ThingMagic.URA2.UI.UserControls
                     //Johar E2 035 106
                     class_id_label.Content = "E2";
                     vendor_id_label.Content = "035";
-                    model_id_label.Content = "106";
+                    model_id_label.Content = "101";
+                    model_id_label.Content = "106"; //电力特种标签系列——TSC3030-C3
                     VBL_stackpanel.Visibility = Visibility.Collapsed;
                     RFMicronMagnusS3_stackpanel.Visibility = Visibility.Collapsed;
                 }));
@@ -339,9 +341,13 @@ namespace ThingMagic.URA2.UI.UserControls
                 temp_read_button.Content = "Stop";
 
 
-                if (langName.Equals("Johar"))
+                if (langName.Equals("Johar_106"))
                 {
-                    startReadJohar();
+                    startReadJohar_106();
+                }
+                if (langName.Equals("Johar_101"))
+                {
+                    startReadJohar_101();
                 }
                 else if (langName.Equals("VBL"))
                 {
@@ -365,7 +371,7 @@ namespace ThingMagic.URA2.UI.UserControls
                 tagdb.SensorType = SensorType.Normal;
                 tagdb.SensorSubType = SensorSubType.VBL_NONE;
 
-                if (langName.Equals("Johar"))
+                if (langName.Equals("Johar_106") || langName.Equals("Johar_101"))
                 {
                     stopReadJohar();
                 }
@@ -1078,19 +1084,41 @@ namespace ThingMagic.URA2.UI.UserControls
         #endregion //VBl
 
         #region Johar
-        private void startReadJohar()
+        private void startReadJohar_106()
         {
-            tagdb.SensorType = SensorType.Johar;
+            tagdb.SensorType = SensorType.Johar_106;
             tagdb.SensorSubType = SensorSubType.NONE;
 
+            startReadJohar(tagdb.SensorType);
+        }
+
+        private void startReadJohar_101()
+        {
+            tagdb.SensorType = SensorType.Johar_101;
+            tagdb.SensorSubType = SensorSubType.NONE;
+
+            startReadJohar(tagdb.SensorType);
+        }
+
+        private void startReadJohar(SensorType sensorType)
+        {
             foreach (int ant in antennaList)
             {
                 objReader.ParamSet("/reader/tagop/antenna", ant);
                 Console.WriteLine("Johar set antenna " + ant);
             }
-            //Johar: ClsId + VendorId + ModelId = E2 035 016
-            //2A54	E2 03 51 06 05 00 96 10 2A 54 00 00 00 00 00 00	
-            byte[] tidmask = new byte[] { (byte)0xE2, (byte)0x03, (byte)0x51, (byte)0x06 };
+
+            byte[] tidmask = null;
+            if(sensorType == SensorType.Johar_101)
+            {
+                //Johar: ClsId + VendorId + ModelId = E2 035 101
+                tidmask = new byte[] { (byte)0xE2, (byte)0x03, (byte)0x51, (byte)0x01 };
+            }
+            else if (sensorType == SensorType.Johar_106)
+            {
+                //Johar: ClsId + VendorId + ModelId = E2 035 106
+                tidmask = new byte[] { (byte)0xE2, (byte)0x03, (byte)0x51, (byte)0x06 };
+            }
             Gen2.Select tidFilter = new Gen2.Select(false, Gen2.Bank.TID, 0, 32, tidmask);
             tidFilter.target = Gen2.Select.Target.Select;
             tidFilter.action = Gen2.Select.Action.ON_N_OFF;
@@ -1132,7 +1160,7 @@ namespace ThingMagic.URA2.UI.UserControls
             objReader.ParamSet("/reader/gen2/t4", t4Val);
             Console.WriteLine("****** ParamSet t4Val=" + t4Val);
 
-            TagOp readUsrOp = new Gen2.ReadData(Gen2.Bank.USER, 8, (byte)1); ;
+            TagOp readUsrOp = new Gen2.ReadData(Gen2.Bank.USER, 8, (byte)0x1);
 
             objReader.ParamSet("/reader/read/plan", new SimpleReadPlan(antennaList, TagProtocol.GEN2, multiFilter, readUsrOp, 1000));
             //objReader.ParamSet("/reader/read/plan", new SimpleReadPlan(antennaList, TagProtocol.GEN2, null, 1000));
@@ -1145,6 +1173,7 @@ namespace ThingMagic.URA2.UI.UserControls
             objReader.StartReading();
             Console.WriteLine("****** startReading...");
         }
+
         private void stopReadJohar()
         {
             Console.WriteLine("StopReading ...");

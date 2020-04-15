@@ -55,9 +55,9 @@ namespace ThingMagic.URA2.BL
             }
 
             //Console.WriteLine("Update isJohar=" + isJohar);
-            if (sensorType == SensorType.Johar)
+            if (sensorType == SensorType.Johar_106|| sensorType == SensorType.Johar_101)
             {
-                double temp = getJoharTemp(mergeData);
+                double temp = getJoharTemp(mergeData, sensorType);
                 if (temp != UNSPECTTEMP)
                     temperature = temp;
             }
@@ -419,41 +419,97 @@ namespace ThingMagic.URA2.BL
             return temp;
         }
 
-        private double getJoharTemp(TagReadData RawRead)
+        private double getJoharTemp(TagReadData RawRead, SensorType sensorType)
         {
             double temp = UNSPECTTEMP;
-            if (RawRead.Data.Length > 0)
+            //获取EPC
+            byte[] bepc = RawRead.Tag.EpcBytes;
+            if (RawRead.Data.Length > 0 && bepc.Count() >= 11)
             {
-                //Console.WriteLine(ByteFormat.ToHex(RawRead.Data, "", " "));
+                byte[] buser = RawRead.Data;
+                Console.WriteLine("EPC={0}, USER={1}", ByteFormat.ToHex(bepc, "", ""), ByteFormat.ToHex(buser, "", ""));
+                
+                byte[] user8 = null;
+                byte[] user9 = null;
+                user8 = new byte[] { buser[0], buser[1] };
+                if (buser.Length >= 4)
+                {
+                    user9 = new byte[] { buser[2], buser[3] };
+                    //Console.WriteLine("user8={0}, user9={1}" + ByteFormat.ToHex(user8, "", ""), ByteFormat.ToHex(user9, "", ""));
+                }
+
+                //1.获取原始温度数据
+                byte[] s06 = new byte[] { bepc[8], bepc[9] };
+                byte[] s07 = new byte[] { bepc[10], bepc[11] };
+                //Console.WriteLine("s06=" + ByteFormat.ToHex(s06, "", ""));
+                //Console.WriteLine("s07=" + ByteFormat.ToHex(s07, "", ""));
+
+                //2.得到SEN_DATA[23:0]
+                string s_SEN_DATA = ByteFormat.ToHex(s06, "", "").Substring(1) + ByteFormat.ToHex(s07, "", "").Substring(1);
+                Console.WriteLine("s_SEN_DATA=" + s_SEN_DATA);
+                int i_SEN_DATA = Convert.ToInt32(s_SEN_DATA, 16);
+                //Console.WriteLine("i_SEN_DATA=" + i_SEN_DATA);
+
+                //3.传感数据验证
+                if(sensorType == SensorType.Johar_101)
+                {
+                    string s_HEADER1 = ByteFormat.ToHex(s06, "", "").Substring(0, 1);
+                    string s_HEADER2 = ByteFormat.ToHex(s07, "", "").Substring(0, 1);
+                    int i_SEN_DATA_23_19 = (i_SEN_DATA & 0x00F80000) >> 19;
+                    uint B00100 = (0xFF20FFFF & 0x00F80000) >> 19;
+                    
+                    //Console.WriteLine("s_HEADER1={0}, s_HEADER2={1}", s_HEADER1, s_HEADER2);
+                    //Console.WriteLine("s_SEN_DATA_23_19={0}, B00100={1}", i_SEN_DATA_23_19, B00100);
+                    if (!s_HEADER1.Equals("F") || !s_HEADER2.Equals("F") || i_SEN_DATA_23_19 != B00100)
+                    {
+                        Console.WriteLine("sensor data check failed!");
+                        return temp;
+                    }
+                }
+
+                //4.获取校验参数
                 int delta1 = 0;
                 double delta2 = 0;
                 delta1 = tagdbByteArrayToInt(RawRead.Data, 0);
                 delta2 = delta1 / 100d - 101d;
                 //Console.WriteLine("d1=" + delta1 + ", d2=" + delta2);
 
-                //2A54 0000 0000 0000 F70B F045
-                byte[] bepc = RawRead.Tag.EpcBytes;
-                if (bepc.Count() < 11)
-                    return 0;
-                byte[] s06 = new byte[] { bepc[8], bepc[9] };
-                byte[] s07 = new byte[] { bepc[10], bepc[11] };
-                //Console.WriteLine("s06=" + ByteFormat.ToHex(s06, "", ""));
-                //Console.WriteLine("s07=" + ByteFormat.ToHex(s07, "", ""));
-
-                string s_SEN_DATA = ByteFormat.ToHex(s06, "", "").Substring(1) + ByteFormat.ToHex(s07, "", "").Substring(1);
-                //Console.WriteLine("s_SEN_DATA=" + s_SEN_DATA);
-
-                //int i_SEN_DATA = int.Parse(s_SEN_DATA, System.Globalization.NumberStyles.HexNumber);
-                int i_SEN_DATA = Convert.ToInt32(s_SEN_DATA, 16);
-                //Console.WriteLine("i_SEN_DATA=" + i_SEN_DATA);
-
+                //5.获得摄氏度格式温度数据
                 double D1 = (i_SEN_DATA & 0x00F80000) >> 19;
                 double D2 = ((i_SEN_DATA & 0x0007FFF8) >> 3) & 0x0000FFFF;
                 //Console.WriteLine("D1=" + D1 + ", D2=" + D2);
-                //Console.WriteLine(11984.47 + ":" + (21.25 + D1 + D2 / 2752 + delta2));
-                double temperature = 11984.47 / (21.25 + D1 + (D2 / 2752) + delta2) - 301.57;
-                Console.WriteLine("temperature=" + temperature);
-                Console.WriteLine();
+                string user9_15_12 = null; //读取user9的时候根据读取值设置，否则根据读取的芯片类型设置
+                if (user9 != null)
+                    user9_15_12 = ByteFormat.ToHex(user9, "", "").Substring(0, 1);
+                else
+                {
+                    if (sensorType == SensorType.Johar_106)
+                        user9_15_12 = "1";
+                    else if (sensorType == SensorType.Johar_101)
+                        user9_15_12 = "2";
+                    else
+                        user9_15_12 = "0";
+                }
+                Console.WriteLine("user9_15_12={0}", user9_15_12);
+
+                double temperature = 0.0;
+                if (user9_15_12.Equals("0") || user9_15_12.Equals("1"))
+                {
+                    temperature = 11984.47 / (21.25 + D1 + (D2 / 2752) + delta2) - 301.57;
+                }
+                else if(user9_15_12.Equals("2"))
+                {
+                    double Treal_temp = 11109.6/(24+(D2+delta1)/375.3)-290;
+                    if(Treal_temp >= 125)
+                    {
+                        temperature = Treal_temp * 1.2 - 25;
+                    }
+                    else
+                    {
+                        temperature = Treal_temp;
+                    }
+                }
+                Console.WriteLine("temperature={0}", temperature);
                 //temp = temperature;
                 temp = Math.Round(temperature, 2);//保留两位小数
             }
@@ -764,7 +820,7 @@ namespace ThingMagic.URA2.BL
             {
                 string key = null;
 
-                if (tagdbSensorType == SensorType.Johar)
+                if (tagdbSensorType == SensorType.Johar_106|| tagdbSensorType == SensorType.Johar_101)
                 {
                     key = addData.EpcString.Substring(0, 4);
                     //Console.WriteLine("*** tagdb add key=" + key);
@@ -924,10 +980,12 @@ namespace ThingMagic.URA2
     public enum SensorType
     {
         Normal = 0,
-        Johar = 1,
+        //Johar = 1,
         VBL = 2,
         ILian = 3,
-        RFMicronMagnusS3 = 4
+        RFMicronMagnusS3 = 4,
+        Johar_106 = 5,
+        Johar_101 = 6
     }
 
     public enum SensorSubType
