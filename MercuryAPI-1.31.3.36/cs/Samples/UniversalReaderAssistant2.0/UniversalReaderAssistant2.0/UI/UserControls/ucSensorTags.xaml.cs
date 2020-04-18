@@ -340,7 +340,6 @@ namespace ThingMagic.URA2.UI.UserControls
                 sensortag_combobox.IsEnabled = false;
                 temp_read_button.Content = "Stop";
 
-
                 if (langName.Equals("Johar_106"))
                 {
                     startReadJohar_106();
@@ -368,9 +367,6 @@ namespace ThingMagic.URA2.UI.UserControls
                 sensortag_tid_gropbox.IsEnabled = true;
                 temp_read_button.Content = "Read";
 
-                tagdb.SensorType = SensorType.Normal;
-                tagdb.SensorSubType = SensorSubType.VBL_NONE;
-
                 if (langName.Equals("Johar_106") || langName.Equals("Johar_101"))
                 {
                     stopReadJohar();
@@ -387,6 +383,9 @@ namespace ThingMagic.URA2.UI.UserControls
                 {
                     stopReadRFMicro();
                 }
+                // ToDo: When stop read, tagdb will update continue, this time tagdb will add Normal tag, so it need to fix.
+                //tagdb.SensorType = SensorType.Normal;
+                //tagdb.SensorSubType = SensorSubType.NONE;
             }
         }
 

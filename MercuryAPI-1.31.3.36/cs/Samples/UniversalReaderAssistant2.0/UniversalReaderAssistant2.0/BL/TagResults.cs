@@ -427,7 +427,7 @@ namespace ThingMagic.URA2.BL
             if (RawRead.Data.Length > 0 && bepc.Count() >= 11)
             {
                 byte[] buser = RawRead.Data;
-                Console.WriteLine("EPC={0}, USER={1}", ByteFormat.ToHex(bepc, "", ""), ByteFormat.ToHex(buser, "", ""));
+                //Console.WriteLine("EPC={0}, USER={1}", ByteFormat.ToHex(bepc, "", ""), ByteFormat.ToHex(buser, "", ""));
                 
                 byte[] user8 = null;
                 byte[] user9 = null;
@@ -446,7 +446,7 @@ namespace ThingMagic.URA2.BL
 
                 //2.得到SEN_DATA[23:0]
                 string s_SEN_DATA = ByteFormat.ToHex(s06, "", "").Substring(1) + ByteFormat.ToHex(s07, "", "").Substring(1);
-                Console.WriteLine("s_SEN_DATA=" + s_SEN_DATA);
+                //Console.WriteLine("s_SEN_DATA=" + s_SEN_DATA);
                 int i_SEN_DATA = Convert.ToInt32(s_SEN_DATA, 16);
                 //Console.WriteLine("i_SEN_DATA=" + i_SEN_DATA);
 
@@ -470,7 +470,7 @@ namespace ThingMagic.URA2.BL
                 //4.获取校验参数
                 int delta1 = 0;
                 double delta2 = 0;
-                delta1 = tagdbByteArrayToInt(RawRead.Data, 0);
+                delta1 = ConvertDelta1(user8);
                 delta2 = delta1 / 100d - 101d;
                 //Console.WriteLine("d1=" + delta1 + ", d2=" + delta2);
 
@@ -490,7 +490,7 @@ namespace ThingMagic.URA2.BL
                     else
                         user9_15_12 = "0";
                 }
-                Console.WriteLine("user9_15_12={0}", user9_15_12);
+                //Console.WriteLine("user9_15_12={0}", user9_15_12);
 
                 double temperature = 0.0;
                 if (user9_15_12.Equals("0") || user9_15_12.Equals("1"))
@@ -509,12 +509,54 @@ namespace ThingMagic.URA2.BL
                         temperature = Treal_temp;
                     }
                 }
-                Console.WriteLine("temperature={0}", temperature);
+                //Console.WriteLine("temperature={0}", temperature);
                 //temp = temperature;
                 temp = Math.Round(temperature, 2);//保留两位小数
             }
             return temp;
         }
+
+        private int ConvertDelta1(byte[] user8)
+        {            
+            int OriginCode = tagdbByteArrayToInt(user8, 0);
+            //Console.WriteLine("OriginCode={0}", OriginCode);
+            return OriginCode;
+        }
+
+        private static int tagdbByteArrayToInt(byte[] data, int offset)
+        {
+            int value = 0;
+            int len = data.Length;
+
+            //负数以补码形式表示，所以 FFF4 -> 1111 1111 1111 0100
+            //复原步骤：
+            // 1）求反码,符号位不变 反码 -> 1000 0000 0000 1011
+            // 2) 求原码，符号位不变, 反码 + 1 = 原码 --> 1000 0000 0000 1100
+            // 3) 转十进制 原码 = -12
+            if ((data[offset] >> 7) == 1)
+            {
+                for (int count = 0; count < len; count++)
+                {
+                    value <<= 8;
+                    if (count == 0)
+                        value ^= (~data[count + offset] & 0x000000FF);
+                    else
+                        value ^= (~data[count + offset] & 0x000000FF);
+                }
+                value = -(value + 1);
+            }
+            else
+            {
+                for (int count = 0; count < len; count++)
+                {
+                    value <<= 8;
+                    value ^= (data[count + offset] & 0x000000FF);
+                }
+            }
+            //Console.WriteLine("value={0}", value);
+            return value;
+        }
+
 
         string old_NValue = "";
         private double UNSPECTTEMP = -100.0;
@@ -566,18 +608,6 @@ namespace ThingMagic.URA2.BL
             }
             //Console.WriteLine("Tune= " + Tune);
             return Tune;
-        }
-
-        private static int tagdbByteArrayToInt(byte[] data, int offset)
-        {
-            int value = 0;
-            int len = data.Length;
-            for (int count = 0; count < len; count++)
-            {
-                value <<= 8;
-                value ^= (data[count + offset] & 0x000000FF);
-            }
-            return value;
         }
 
         #region INotifyPropertyChanged Members
@@ -884,7 +914,7 @@ namespace ThingMagic.URA2.BL
                     EpcIndex.Add(key, value);
                     //Call this method to calculate total tag reads and unique tag read counts 
                     UpdateTagCountTextBox(EpcIndex);
-                    //Console.WriteLine("tagdb add ["+key+"]");
+                    Console.WriteLine("tagdb add [" + key + "]");
                 }
                 else
                 {
